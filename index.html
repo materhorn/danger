@@ -1,0 +1,1598 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>毒化物 / 化學品 火災緊急應變查詢系統</title>
+<!-- PWA：可安裝、離線可用 -->
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#0f1419">
+<link rel="icon" type="image/png" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-180.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="毒化物速查">
+<style>
+  :root{
+    --bg:#0f1419; --panel:#1a2129; --panel2:#222c36; --line:#33414f;
+    --txt:#e8edf2; --dim:#9fb0bf; --accent:#3da9fc; --accent2:#2b7fd4;
+    --fire:#ff4d3d; --fire-bg:#3a1512; --warn:#ffb020; --warn-bg:#3a2c0e;
+    --ok:#34d399; --ok-bg:#0f2e22; --toxic:#c084fc; --water:#38bdf8;
+    --tag:#2a3742;
+  }
+  *{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
+  html,body{margin:0; padding:0;}
+  body{
+    background:var(--bg); color:var(--txt);
+    font-family:"Microsoft JhengHei","PingFang TC","Noto Sans TC",system-ui,sans-serif;
+    line-height:1.55; font-size:16px;
+    padding-bottom:env(safe-area-inset-bottom);
+  }
+  header{
+    position:sticky; top:0; z-index:50; background:linear-gradient(180deg,#141b22,#0f1419);
+    border-bottom:1px solid var(--line); padding:10px 14px 8px;
+  }
+  .title-row{display:flex; align-items:center; gap:10px;}
+  .title-row h1{font-size:18px; margin:0; flex:1; letter-spacing:.5px;}
+  .title-row .badge{font-size:11px; background:var(--fire); color:#fff; padding:2px 8px; border-radius:20px; font-weight:700; white-space:nowrap;}
+  .searchbox{position:relative; margin-top:10px;}
+  .searchbox input{
+    width:100%; padding:13px 44px 13px 14px; font-size:17px; border-radius:12px;
+    border:2px solid var(--accent2); background:#0b1015; color:var(--txt); outline:none;
+  }
+  .searchbox input:focus{border-color:var(--accent);}
+  .searchbox .clear{position:absolute; right:8px; top:50%; transform:translateY(-50%);
+    background:var(--tag); border:none; color:var(--dim); width:30px; height:30px; border-radius:50%; font-size:18px; cursor:pointer;}
+  .hint{font-size:11.5px; color:var(--dim); margin-top:5px;}
+  .chips{display:flex; gap:7px; overflow-x:auto; padding:9px 0 2px; -webkit-overflow-scrolling:touch;}
+  .chips::-webkit-scrollbar{display:none;}
+  .chip{white-space:nowrap; font-size:13px; padding:6px 12px; border-radius:20px; background:var(--tag); color:var(--dim); border:1px solid transparent; cursor:pointer;}
+  .chip.active{background:var(--accent2); color:#fff; border-color:var(--accent);}
+  .chip.tox.active{background:#7c3aed;}
+  .chip.fire.active{background:var(--fire);}
+
+  main{padding:12px 14px 40px; max-width:880px; margin:0 auto;}
+  .disclaimer{background:var(--warn-bg); border:1px solid var(--warn); color:#ffd98a;
+    font-size:12.5px; padding:9px 12px; border-radius:10px; margin-bottom:12px;}
+  .disclaimer b{color:#ffe9bd;}
+  .count{font-size:12.5px; color:var(--dim); margin:2px 2px 10px;}
+
+  .card{background:var(--panel); border:1px solid var(--line); border-radius:14px; margin-bottom:11px; overflow:hidden;}
+  .card-head{display:flex; align-items:flex-start; gap:10px; padding:13px 14px; cursor:pointer;}
+  .card-head .names{flex:1; min-width:0;}
+  .card-head .zh{font-size:18px; font-weight:700;}
+  .card-head .en{font-size:12.5px; color:var(--dim); margin-top:1px; word-break:break-word;}
+  .card-head .ids{font-size:11.5px; color:var(--dim); margin-top:4px; display:flex; flex-wrap:wrap; gap:6px;}
+  .id-pill{background:#0b1015; border:1px solid var(--line); padding:1px 7px; border-radius:6px; font-variant-numeric:tabular-nums;}
+  .id-pill.un{color:#ffd98a; border-color:#5a4a1e;}
+  .id-pill.erg{color:#9fd1ff; border-color:#27496e;}
+  .flags{display:flex; flex-direction:column; gap:5px; align-items:flex-end;}
+  .flag{font-size:10.5px; font-weight:700; padding:2px 7px; border-radius:6px; white-space:nowrap;}
+  .flag.tox{background:#3b1d5e; color:#d8b4fe;}
+  .flag.fire{background:var(--fire-bg); color:#ff9b8f; border:1px solid #6b261d;}
+  .flag.water{background:#082f3f; color:#7dd3fc; border:1px solid #1c5169;}
+  .flag.haz{background:#1f3326; color:#86efac;}
+  .flag.offi{background:#0e2233; color:#7dd3fc; border:1px solid #1c4a6b;}
+  .id-pill.toxno{color:#86efac; border-color:#1f4d33; background:#0c1a12;}
+  .card.lite{border-style:dashed; border-color:#2c3e4d;}
+  .card.lite .zh{font-size:16px;}
+
+  .card-body{display:none; padding:0 14px 14px; border-top:1px solid var(--line);}
+  .card.open .card-body{display:block;}
+  .card.open .chev{transform:rotate(180deg);}
+  .chev{color:var(--dim); transition:.2s; font-size:13px; margin-top:3px;}
+
+  .sec{margin-top:12px; border-radius:10px; padding:10px 12px; font-size:14px;}
+  .sec h4{margin:0 0 5px; font-size:12.5px; letter-spacing:.5px; text-transform:none; display:flex; align-items:center; gap:6px;}
+  .sec.fire{background:var(--fire-bg); border:1px solid #6b261d;}
+  .sec.fire h4{color:#ff9b8f;}
+  .sec.spill{background:#2a230e; border:1px solid #5a4a1e;}
+  .sec.spill h4{color:#ffd98a;}
+  .sec.aid{background:var(--ok-bg); border:1px solid #1c5740;}
+  .sec.aid h4{color:#6ee7b7;}
+  .sec.haz{background:#241a2e; border:1px solid #4a2d6b;}
+  .sec.haz h4{color:#d8b4fe;}
+  .sec.info{background:var(--panel2); border:1px solid var(--line);}
+  .sec.info h4{color:var(--accent);}
+  .sec.offi{background:#0c1c29; border:1px solid #1c4a6b;}
+  .sec.offi h4{color:#7dd3fc;}
+  .sec.offi a{color:#7dd3fc;}
+  .sec .forbid{color:#ff8a7d; font-weight:700;}
+
+  .kv{display:grid; grid-template-columns:auto 1fr; gap:3px 12px; font-size:13.5px; margin-top:4px;}
+  .kv dt{color:var(--dim);}
+  .kv dd{margin:0;}
+  .qty-hi{color:#ffd98a; font-weight:700;}
+
+  .topbtns{display:flex; gap:8px; margin-bottom:12px; flex-wrap:wrap;}
+  .topbtns button{flex:1; min-width:130px; background:var(--panel2); color:var(--txt); border:1px solid var(--line);
+    border-radius:10px; padding:10px; font-size:13.5px; cursor:pointer;}
+  .topbtns button:active{background:var(--panel);}
+
+  .ref{background:var(--panel); border:1px solid var(--line); border-radius:14px; padding:14px; margin-bottom:14px;}
+  .ref h3{margin:0 0 10px; font-size:15px; color:var(--accent);}
+  table{width:100%; border-collapse:collapse; font-size:12.5px;}
+  th,td{border:1px solid var(--line); padding:6px 8px; text-align:left; vertical-align:top;}
+  th{background:var(--panel2); color:var(--dim); font-weight:600;}
+  td .q{color:#ffd98a; font-weight:700; white-space:nowrap;}
+  .nores{text-align:center; color:var(--dim); padding:40px 10px; font-size:15px;}
+  .src{font-size:12px; color:var(--dim); margin-top:18px; border-top:1px solid var(--line); padding-top:12px;}
+  .src a{color:var(--accent);}
+  .hidden{display:none!important;}
+  details.acc summary{cursor:pointer; padding:8px 0; font-size:13px; color:var(--accent); list-style:none;}
+  details.acc summary::-webkit-details-marker{display:none;}
+  mark{background:#5a4a1e; color:#ffe9bd; border-radius:3px; padding:0 2px;}
+  @media(min-width:560px){ .card-head .zh{font-size:19px;} }
+</style>
+</head>
+<body>
+<header>
+  <div class="title-row">
+    <h1>🔥 毒化物 / 化學品 火災緊急應變查詢</h1>
+    <span class="badge">現場速查</span>
+  </div>
+  <div class="searchbox">
+    <input id="q" type="search" inputmode="search" autocomplete="off"
+      placeholder="輸入 中/英文名稱、CAS、UN編號…（例：矽烷 / HF / 1017 / 苯）">
+    <button class="clear" id="clearBtn" aria-label="清除">×</button>
+  </div>
+  <div class="hint">💡 現場可只記 <b>UN編號</b> 或 <b>名稱</b> 任一即可查；點卡片展開 → 先看紅色「滅火」欄</div>
+  <div class="chips" id="chips"></div>
+</header>
+
+<main>
+  <div class="topbtns">
+    <button onclick="toggleRef('refQty')">📋 公共危險物品管制量表</button>
+    <button onclick="toggleRef('refGas')">🛢️ 高壓氣體分類表</button>
+    <button onclick="toggleRef('refTox')">☠️ 毒化物 4 類定義</button>
+    <button onclick="toggleRef('refErg')">📖 ERG 應變指南說明</button>
+    <input type="file" id="impFile" accept=".json,application/json" class="hidden">
+    <button onclick="document.getElementById('impFile').click()" title="匯入環境部 TOXIC_P_23 最新 JSON 以更新官方清單">🔄 更新官方清單</button>
+  </div>
+
+  <div class="disclaimer">
+    ⚠️ <b>使用須知（務必詳讀）</b>：本工具為<strong>現場快速參考</strong>，所有應變動作前請以
+    <b>物質安全資料表(SDS)</b>、<b>北美緊急應變指南(ERG)實體手冊</b> 及
+    <b>環境部毒理資料庫 / 119 通報指揮中心</b> 之即時指示為準。
+    本系統已匯入<b>環境部「公告毒性化學物質及其毒性分類」(TOXIC_P_23) 官方清單共 340 筆（清單內最新公告日 2024-04；本機下載日 2026-06-21）</b>。
+    ⚠️ <b>清單以官方公告為準，使用前請至環境部官網核對最新版（現行約 341 種），勿誤認為已更新至最新</b>；可用「🔄 更新官方清單」匯入最新 JSON。
+    本系統另對高風險與科技廠化學品附現場滅火/急救詳解；標示「官方清單」之品項僅有法定基本資料，其專屬應變請點卡片之<b>官方詳細頁</b>並對照 ERG/SDS。
+    數值（管制量、濃度、隔離距離）可能因濃度與修法而異，<b>動作前務必再核對官方來源</b>。
+  </div>
+
+  <!-- 參考表 -->
+  <div class="ref hidden" id="refQty">
+    <h3>公共危險物品之種類、分級及管制量（內政部消防署 · 設置標準辦法 附表一）</h3>
+    <table>
+      <thead><tr><th>分類</th><th>名稱 / 種類</th><th>分級</th><th>管制量</th></tr></thead>
+      <tbody>
+        <tr><td rowspan="3">第一類<br>氧化性固體</td><td rowspan="3">氯酸鹽類、過氯酸鹽類、無機過氧化物、次氯酸鹽類、溴酸鹽類、硝酸鹽類、碘酸鹽類、過錳酸鹽類、重鉻酸鹽類、三氧化鉻、二氧化鉛、亞硝酸鹽類、過硫酸鹽類、過硼酸鹽類、亞氯酸鹽類等<br><span style="color:#9fb0bf">(分級依氧化性試驗結果認定)</span></td><td>第一級</td><td><span class="q">50 公斤</span></td></tr>
+        <tr><td>第二級</td><td><span class="q">300 公斤</span></td></tr>
+        <tr><td>第三級</td><td><span class="q">1,000 公斤</span></td></tr>
+        <tr><td rowspan="5">第二類<br>易燃固體</td><td>硫化磷、赤磷(紅磷)、硫磺</td><td>—</td><td><span class="q">100 公斤</span></td></tr>
+        <tr><td>鐵粉</td><td>—</td><td><span class="q">500 公斤</span></td></tr>
+        <tr><td>金屬粉(鋁粉/鋅粉等)、鎂</td><td>第一種 / 第二種</td><td><span class="q">100 / 500 公斤</span></td></tr>
+        <tr><td>易燃性固體</td><td>第一種 / 第二種</td><td><span class="q">100 / 500 公斤</span></td></tr>
+        <tr><td>引火性固體(固態酒精等)</td><td>—</td><td><span class="q">1,000 公斤</span></td></tr>
+        <tr><td rowspan="3">第三類<br>發火性液體/<br>固體及<br>禁水性物質</td><td>鉀、鈉、烷基鋁、烷基鋰</td><td>—</td><td><span class="q">10 公斤</span></td></tr>
+        <tr><td>黃磷(白磷)</td><td>—</td><td><span class="q">20 公斤</span></td></tr>
+        <tr><td>鹼金屬(鉀鈉除外)、鹼土金屬、有機金屬化合物、金屬氫化物、金屬磷化物、鈣或鋁之碳化物、三氯矽烷</td><td>第一種 /<br>第二種 /<br>第三種</td><td><span class="q">10 / 50 / 300 公斤</span></td></tr>
+        <tr><td rowspan="8">第四類<br>易燃液體</td><td>特殊易燃物<br><span style="color:#9fb0bf">(乙醚、二硫化碳、乙醛、環氧丙烷;閃火點<-20°C且沸點≤40°C,或自燃溫度≤100°C)</span></td><td>—</td><td><span class="q">50 公升</span></td></tr>
+        <tr><td>第一石油類<br><span style="color:#9fb0bf">(丙酮、汽油等;閃火點未達21°C)</span></td><td>非水溶性 / 水溶性</td><td><span class="q">200 / 400 公升</span></td></tr>
+        <tr><td>酒精類<span style="color:#9fb0bf">(甲醇/乙醇/異丙醇等C1~C3飽和一價醇)</span></td><td>—</td><td><span class="q">400 公升</span></td></tr>
+        <tr><td>第二石油類<br><span style="color:#9fb0bf">(煤油、柴油、二甲苯等;閃火點21~70°C)</span></td><td>非水溶性 / 水溶性</td><td><span class="q">1,000 / 2,000 公升</span></td></tr>
+        <tr><td>第三石油類<br><span style="color:#9fb0bf">(重油、雜酚油、甘油等;閃火點70~200°C)</span></td><td>非水溶性 / 水溶性</td><td><span class="q">2,000 / 4,000 公升</span></td></tr>
+        <tr><td>第四石油類<span style="color:#9fb0bf">(潤滑油、塑化劑等;閃火點200~250°C)</span></td><td>—</td><td><span class="q">6,000 公升</span></td></tr>
+        <tr><td>動植物油類<span style="color:#9fb0bf">(閃火點<250°C)</span></td><td>—</td><td><span class="q">10,000 公升</span></td></tr>
+        <tr><td colspan="2" style="color:#9fb0bf">※「水溶性」指20°C時與水以任意比例互溶者</td><td></td></tr>
+        <tr><td rowspan="2">第五類<br>自反應物質及<br>有機過氧化物</td><td rowspan="2">有機過氧化物、硝酸酯類、硝基化合物、亞硝基化合物、偶氮化合物、重氮化合物、聯胺(肼)之誘導體、羥胺、羥胺鹽類、金屬疊氮化合物、硝酸胍等<br><span style="color:#9fb0bf">(分級依自反應性試驗認定)</span></td><td>第一種</td><td><span class="q">10 公斤</span></td></tr>
+        <tr><td>第二種</td><td><span class="q">100 公斤</span></td></tr>
+        <tr><td>第六類<br>氧化性液體</td><td>過氯酸、過氧化氫、硝酸、鹵素間化合物、發煙硝酸等</td><td>—</td><td><span class="q">300 公斤</span></td></tr>
+      </tbody>
+    </table>
+    <p class="hint" style="margin-top:8px">達管制量之 <b>製造、儲存、處理場所</b> 應依法設置並由消防機關列管；達管制量 <b>1/2 以上未滿管制量</b> 之少量場所另有規定。第一/二/三/五類之「分級(第一~三級/第一~二種)」係依<b>危險性試驗</b>(氧化性、易燃性、發火性、自反應性試驗)結果認定，非僅依名稱固定。<b>氣體</b>(矽烷、氨、氯、LPG、乙炔等)不屬此六類，屬「可燃性高壓氣體/毒性氣體」，見下方「🛢️ 高壓氣體分類表」。</p>
+  </div>
+
+  <div class="ref hidden" id="refTox">
+    <h3>毒性化學物質 4 大分類（毒性及關注化學物質管理法）</h3>
+    <table>
+      <thead><tr><th>分類</th><th>俗稱</th><th>定義</th></tr></thead>
+      <tbody>
+        <tr><td>第一類</td><td>難分解物質</td><td>在環境中不易分解，或因生物蓄積、濃縮、轉化作用，致污染環境或危害人體健康。</td></tr>
+        <tr><td>第二類</td><td>慢毒性物質</td><td>有致腫瘤、生育能力受損、畸胎、遺傳因子突變或其他慢性疾病作用。</td></tr>
+        <tr><td>第三類</td><td>急毒性物質</td><td>經暴露將<b>立即危害</b>人體健康或生物生命。（火場最需警戒）</td></tr>
+        <tr><td>第四類</td><td>疑慮 / 環境荷爾蒙</td><td>具内分泌干擾素特性，或有污染環境、危害人體健康之虞。</td></tr>
+      </tbody>
+    </table>
+    <p class="hint" style="margin-top:8px">截至目前，環境部化學物質管理署<b>公告列管毒化物共約 341 種</b>，分屬上列四類（部分物質同時列為多類）。另有「關注化學物質」依其危害特性個別公告。完整清單請見下方官方連結。</p>
+  </div>
+
+  <div class="ref hidden" id="refErg">
+    <h3>北美緊急應變指南（ERG）使用說明</h3>
+    <p style="font-size:13.5px; margin:4px 0">ERG 由美、加、墨運輸部編製（每 4 年改版，最新為 <b>ERG 2024</b>），台灣消防 / 環保單位廣泛採用。使用流程：</p>
+    <ol style="font-size:13.5px; padding-left:20px; margin:4px 0">
+      <li><b>由 UN 編號或品名</b>查到對應的 <b>3 位數「指南號碼」(Guide No.)</b>（本系統每張卡片已標示）。</li>
+      <li>翻到該指南頁（橘色頁），內含：潛在危害、公共安全（隔離 / 疏散距離）、緊急應變（火災 / 洩漏 / 急救）。</li>
+      <li>綠色頁(表一)為「<b>初步隔離與防護距離</b>」，適用於劇毒氣體 / 遇水釋出毒氣者（指南號碼後標 <b>P / 帶底色</b>）。</li>
+    </ol>
+    <table>
+      <thead><tr><th>常見指南</th><th>適用類型</th><th>滅火重點</th></tr></thead>
+      <tbody>
+        <tr><td>115</td><td>易燃氣體（含液化氣、LNG/H₂）</td><td>關閉氣源優先；未能止漏勿滅火焰</td></tr>
+        <tr><td>116 / 116P</td><td>易燃氣體（會自燃 / 不穩定）</td><td>遠距、大量水冷卻鋼瓶</td></tr>
+        <tr><td>119</td><td>毒性 + 易燃氣體</td><td>正壓SCBA、上風處、大範圍隔離</td></tr>
+        <tr><td>124 / 125</td><td>毒性 / 腐蝕性氣體（氯、氨、HF）</td><td>禁直接灑水於洩漏源；水霧驅散蒸氣</td></tr>
+        <tr><td>137 / 154 / 157</td><td>遇水反應 / 腐蝕性物質</td><td>勿直接加水；防化服</td></tr>
+        <tr><td>140 / 143</td><td>氧化劑</td><td>大量水；勿用乾粉以外抑制可</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="ref hidden" id="refGas">
+    <h3>高壓氣體分類表（消防署「可燃性高壓氣體」＋勞動部「高壓氣體勞工安全規則」）</h3>
+
+    <p style="font-size:13.5px;margin:6px 0 4px"><b>① 可燃性高壓氣體</b>（消防署 設置標準辦法 第4條）— 達管制量之製造/儲存/處理場所由<b>消防機關</b>列管：</p>
+    <table>
+      <thead><tr><th>類型</th><th>所列氣體</th><th>條件</th></tr></thead>
+      <tbody>
+        <tr><td>壓縮氣體</td><td><b>氫、乙烯、甲烷、乙烷</b></td><td>常用溫度或35°C時表壓力≥10 kg/cm²(1 MPa)</td></tr>
+        <tr><td>壓縮乙炔</td><td><b>乙炔</b></td><td>常用溫度或15°C時表壓力≥2 kg/cm²(0.2 MPa)</td></tr>
+        <tr><td>液化氣體</td><td><b>丙烷、丁烷、液化石油氣(LPG)</b></td><td>常用溫度或35°C以下表壓力≥2 kg/cm²(0.2 MPa)</td></tr>
+      </tbody>
+    </table>
+
+    <p style="font-size:13.5px;margin:12px 0 4px"><b>② 高壓氣體勞工安全規則 第4條</b>（勞動部）— 勞工作業場所適用：</p>
+    <table>
+      <thead><tr><th>分類</th><th>所列氣體（法條列舉）</th></tr></thead>
+      <tbody>
+        <tr><td><b>可燃性氣體</b><br><span style="color:#9fb0bf">(33種＋通則)</span></td><td>丙烯腈、丙烯醛、乙炔、乙醛、氨、一氧化碳、乙烷、乙胺、乙苯、乙烯、氯乙烷、氯甲烷、氯乙烯、環氧乙烷、環氧丙烷、氰化氫、環丙烷、二甲胺、氫、三甲胺、二硫化碳、丁二烯、丁烷、丁烯、丙烷、丙烯、溴甲烷、苯、甲烷、甲胺、二甲醚、硫化氫，<b>及其他爆炸下限≤10%、或爆炸上限與下限之差≥20% 之氣體</b>。</td></tr>
+        <tr><td><b>毒性氣體</b><br><span style="color:#9fb0bf">(19種＋通則)</span></td><td>丙烯腈、丙烯醛、二氧化硫、氨、一氧化碳、氯、氯甲烷、氯丁二烯、環氧乙烷、氰化氫、二乙胺、三甲胺、二硫化碳、氟、溴甲烷、苯、光氣、甲胺、硫化氫，<b>及其他容許濃度≤200 ppm 之氣體</b>。</td></tr>
+        <tr><td><b>氧氣</b></td><td>氧（助燃氣體；富氧環境使可燃物劇烈燃燒）。</td></tr>
+        <tr><td><b>惰性(窒息性)氣體</b></td><td>氮、氬、氦、氖、氪、氙、二氧化碳等（不燃不助燃，但排擠氧氣致窒息）。</td></tr>
+        <tr><td><b>冷凍液化氣體</b><br><span style="color:#9fb0bf">(液態低溫)</span></td><td>液態氮、液態氧、液態氬、液態氦、液氨、液氯、液化天然氣(LNG)、液化石油氣(LPG)、液態二氧化碳等（極低溫凍傷＋氣化膨脹窒息/可燃/助燃，視氣體性質而定）。</td></tr>
+      </tbody>
+    </table>
+    <p class="hint" style="margin-top:8px">同一氣體可同時屬多類（如<b>氨、一氧化碳、環氧乙烷、氰化氫、硫化氫</b>同列可燃性＋毒性）。「容許濃度」依勞工作業場所容許暴露標準；火場常見之分解毒氣如<b>光氣</b>(含氯有機物燃燒)亦在毒性氣體之列。本表所列氣體於本系統多已建卡片，可直接於上方搜尋。</p>
+  </div>
+
+  <div class="count" id="count"></div>
+  <div id="list"></div>
+
+  <div class="src">
+    <b>官方資料來源 / 完整清單：</b><br>
+    • 環境部化學物質管理署「公告毒性化學物質及其管制濃度與分級運作量一覽表」：cha.gov.tw<br>
+    • 全國法規資料庫「毒性及關注化學物質管理法」(O0060012)、「公共危險物品及可燃性高壓氣體製造儲存處理場所設置標準暨安全管理辦法」(D0120025)<br>
+    • 內政部消防署 消防法令查詢系統：law.nfa.gov.tw<br>
+    • 緊急應變：環境部毒災通報 <b>0800-085-119</b> / 消防 <b>119</b> / 國家毒物中心 <b>02-2871-7121</b><br>
+    <span style="color:#7a8a98">本檔可離線使用，建議存於手機 / 平板。資料整理日：2026-06。</span>
+    <div style="margin-top:10px; padding:9px 11px; background:#0c1c29; border:1px solid #1c4a6b; border-radius:8px; color:#9fd1ff; font-size:12px;">
+      📲 <b>安裝成 App（離線可用）</b>：用手機瀏覽器開啟本系統網址後 →
+      <b>iPhone(Safari)</b>：點下方「分享」<b>⬆️</b> → 「加入主畫面」；
+      <b>Android(Chrome)</b>：點右上「⋮」→ 「安裝應用程式 / 加入主畫面」。
+      完成後桌面會多一個「毒化物速查」圖示，點開全螢幕、<b>沒訊號也能用</b>。
+      <span style="color:#6f8597">（離線安裝需以 https 網址開啟；直接用檔案開啟仍可正常查詢。）</span>
+    </div>
+  </div>
+</main>
+
+<script>
+/* ===================== 化學品資料庫 =====================
+   欄位說明：
+   zh中文 en英文 alias別名 cas un erg(指南號碼)
+   tox: 毒化物分類陣列(如[3]) 或 null
+   cat: tech科技廠 / toxic毒化物 / common一般 / oxid氧化劑/反應性  (可多個)
+   water: true=禁水/遇水反應(現場重大警示)
+   gas: true=氣體
+   haz: 公共危險物品分類字串 或 null(非公共危險物品)
+   qty: 管制量字串 或 null
+   use: 科技廠/工業用途
+   hazard 危害特性 / fire 滅火 / spill 洩漏 / aid 急救 / ppe 防護 / phys 外觀物性
+========================================================== */
+const DATA = [
+/* ---------- 科技廠特殊氣體 ---------- */
+{zh:"矽烷",en:"Silane",alias:"四氫化矽 SiH4",cas:"7803-62-5",un:"2203",erg:"116",tox:null,cat:["tech"],water:false,gas:true,haz:"可燃性高壓氣體(自燃性)",qty:null,
+ use:"半導體 CVD/磊晶 沉積多晶矽、矽薄膜之主要氣體。",
+ phys:"無色氣體，有臭味；自燃性(接觸空氣即可能自燃)。比空氣重。",
+ hazard:"極易燃且具自燃性，外洩遇空氣常自行起火或爆炸；鋼瓶受熱有爆炸(BLEVE)之虞。燃燒生成 SiO₂ 白煙。",
+ fire:"<b>首要：遠端關閉氣源</b>。若無法止漏，<span class='forbid'>不要撲滅火焰</span>(防止氣體積聚復燃爆炸)，改以大量水霧/灑水冷卻鋼瓶及周邊，待氣源耗盡。",
+ spill:"立即疏散、隔離至少100m。正壓SCBA。設法由閥源止漏，避免火花。",
+ aid:"吸入：移至上風新鮮空氣處、保暖、視需要給氧並送醫。灼傷以大量水沖。",
+ ppe:"正壓式SCBA + 防火/抗閃焰服。"},
+
+{zh:"砷化氫",en:"Arsine",alias:"砷化三氫 AsH3 胂",cas:"7784-42-1",un:"2188",erg:"119",tox:null,cat:["tech","toxic"],water:false,gas:true,haz:"毒性 + 可燃性高壓氣體",qty:null,
+ use:"半導體離子佈植/磊晶之 n 型摻雜(砷)氣體。",
+ phys:"無色氣體，微帶大蒜味(濃度高時反而不易察覺)；劇毒。比空氣重。",
+ hazard:"<b>極劇毒</b>，強力溶血毒(破壞紅血球致急性腎衰竭)，吸入低濃度即可致命，常延遲數小時發作。易燃。",
+ fire:"關閉氣源優先；以水霧冷卻鋼瓶。燃燒產生有毒砷氧化物煙霧，務必上風、全程SCBA。",
+ spill:"大範圍隔離疏散(下風更大)，禁止進入低窪處。僅受訓人員著A級防護止漏。",
+ aid:"吸入：立即移離、給氧、絕對臥床休息(勿走動)，<b>儘速送醫並告知為砷化氫中毒(可能需換血/血液透析)</b>。出現茶色尿為危險徵兆。",
+ ppe:"A級全密封化學防護(正壓SCBA)。"},
+
+{zh:"磷化氫",en:"Phosphine",alias:"膦 磷化三氫 PH3",cas:"7803-51-2",un:"2199",erg:"119",tox:[3],cat:["tech","toxic"],water:false,gas:true,haz:"毒性 + 可燃性高壓氣體",qty:null,
+ use:"半導體 p/n 摻雜(磷)、磊晶；亦為燻蒸劑。",
+ phys:"無色氣體，腐魚/電石味；劇毒、自燃性(常含 P₂H₄ 雜質而自燃)。",
+ hazard:"劇毒，攻擊呼吸、心血管與神經系統；易燃且可能自燃；遇氧化劑劇烈反應。",
+ fire:"關閉氣源；大量水霧冷卻鋼瓶。未止漏前勿滅火焰。燃燒生成磷酸煙霧。",
+ spill:"大範圍隔離、上風、低窪警戒。A級防護止漏。",
+ aid:"吸入：移離、給氧、安靜送醫(肺水腫可能延遲發作，需觀察24-72h)。",
+ ppe:"A級防護 + 正壓SCBA。"},
+
+{zh:"二硼烷",en:"Diborane",alias:"乙硼烷 B2H6",cas:"19287-45-7",un:"1911",erg:"119",tox:null,cat:["tech","toxic"],water:true,gas:true,haz:"毒性 + 可燃性高壓氣體(自燃)",qty:null,
+ use:"半導體硼摻雜(p型)、CVD 硼化物薄膜。",
+ phys:"無色氣體，噁心甜味；自燃性、劇毒。",
+ hazard:"極易燃/自燃，遇水或潮氣分解放氫並起火；劇毒刺激呼吸道致肺水腫。",
+ fire:"關氣源；<span class='forbid'>禁用水直接沖洩漏源(遇水反應放氫)</span>，以乾粉/CO₂並用水霧冷卻鋼瓶。",
+ spill:"隔離疏散、上風、嚴禁水接觸洩漏源。",
+ aid:"吸入：移離給氧、觀察肺水腫、送醫。",
+ ppe:"A級防護 + SCBA。"},
+
+{zh:"氨 / 液氨",en:"Ammonia, anhydrous",alias:"NH3 阿摩尼亞",cas:"7664-41-7",un:"1005",erg:"125",tox:null,cat:["tech","toxic"],water:false,gas:true,haz:"毒性 + 可燃性高壓氣體",qty:null,
+ use:"半導體氮化矽(SiN)沉積、磊晶、面板製程；冷媒。",
+ phys:"無色氣體，極強烈刺鼻味；可燃(範圍窄)。蒸氣略輕於空氣，潮濕時形成白霧。",
+ hazard:"強腐蝕、強刺激，高濃度灼傷眼/呼吸道致喉頭水腫、肺水腫；密閉空間可燃爆。",
+ fire:"關氣源；<b>以水霧驅散/吸收蒸氣雲、冷卻容器</b>，但<span class='forbid'>勿將水直接射入液氨洩漏口</span>(劇烈氣化擴大蒸氣雲)。",
+ spill:"上風、隔離；水幕壓制蒸氣。氣瓶/管末漏點由專人止漏。",
+ aid:"吸入：移至新鮮空氣、給氧；眼/皮膚接觸<b>大量清水沖洗≧15-20分</b>，送醫。",
+ ppe:"防化服 + SCBA；抗氨手套。"},
+
+{zh:"氟化氫(無水) / 氫氟酸",en:"Hydrogen fluoride / Hydrofluoric acid",alias:"HF 氟酸 BOE",cas:"7664-39-3",un:"1052",erg:"125",tox:null,cat:["tech","toxic"],water:false,gas:false,haz:"非公共危險物品(劇毒腐蝕性)",qty:null,
+ use:"半導體/面板<b>蝕刻、清洗</b>最關鍵藥液；BOE 緩衝蝕刻液主成分。",
+ phys:"無水HF為發煙液/氣體；水溶液(氫氟酸)無色發煙、刺鼻。UN1790為溶液。",
+ hazard:"<b>極危險</b>：氟離子穿透皮膚深層、與鈣鎂結合致組織壞死與<b>致命性低血鈣/心律不整</b>；少量接觸(體表>2-3%)即可致死，疼痛常延遲數小時。吸入致肺水腫。",
+ fire:"本身不燃；容器受熱會釋出劇毒HF氣體。以水霧冷卻容器、驅散煙霧，全程SCBA與防酸服。",
+ spill:"大量清水/石灰中和稀釋，圍堵勿入下水道。嚴防接觸。",
+ aid:"<b>皮膚接觸：立即大量清水沖洗，並儘速塗抹/敷上葡萄糖酸鈣凝膠(2.5%)，務必送醫</b>；眼睛大量沖水並就醫。吸入給氧送醫。現場應預置鈣劑與監測血鈣/心電圖。",
+ ppe:"丁基/氯丁橡膠防酸全身衣、面罩、SCBA；備葡萄糖酸鈣。"},
+
+{zh:"氯",en:"Chlorine",alias:"Cl2 液氯",cas:"7782-50-5",un:"1017",erg:"124",tox:[3],cat:["tech","toxic"],water:false,gas:true,haz:"毒性 + 高壓氣體(助燃/氧化)",qty:null,
+ use:"半導體/面板<b>乾式蝕刻</b>、清洗；自來水/泳池消毒。",
+ phys:"黃綠色氣體，強烈刺激漂白水味；不燃但助燃，比空氣重沉於低處。",
+ hazard:"強氧化、強刺激致肺水腫；與氨、氫、烴、可燃物劇烈反應或爆炸。",
+ fire:"本身不燃但助燃；以水霧冷卻容器並驅散氣雲，<span class='forbid'>勿將水直接射入洩漏口</span>。設法關閥止漏。",
+ spill:"上風、高處警戒(氣體沉降)，大範圍疏散。水幕壓制。",
+ aid:"吸入：移離、半坐臥、給氧、勿運動、送醫(肺水腫可延遲)。眼/皮膚大量沖水。",
+ ppe:"A級防護 + SCBA。"},
+
+{zh:"氯化氫 / 鹽酸",en:"Hydrogen chloride / Hydrochloric acid",alias:"HCl 氫氯酸",cas:"7647-01-0",un:"1050",erg:"125",tox:null,cat:["tech","toxic"],water:false,gas:true,haz:"非公共危險物品(腐蝕性)",qty:null,
+ use:"半導體清洗(RCA SC-2)、蝕刻、磊晶氣相清洗。UN1789為鹽酸水溶液。",
+ phys:"無水HCl無色發煙氣體、刺鼻；鹽酸為無色~淡黃發煙液。比空氣重。",
+ hazard:"強腐蝕、刺激致呼吸道與眼灼傷、肺水腫；遇多數金屬放出氫氣(易燃)。",
+ fire:"不燃；水霧驅散氣雲、冷卻容器，勿直射洩漏口。",
+ spill:"大量水稀釋、石灰中和、圍堵。",
+ aid:"吸入移離給氧；眼/皮膚大量沖水≧15分；送醫。",
+ ppe:"防酸服 + 面罩/SCBA。"},
+
+{zh:"三氟化硼",en:"Boron trifluoride",alias:"BF3",cas:"7637-07-2",un:"1008",erg:"125",tox:null,cat:["tech"],water:true,gas:true,haz:"毒性腐蝕性高壓氣體",qty:null,
+ use:"半導體硼離子佈植摻雜源、觸媒。",
+ phys:"無色發煙氣體，刺鼻；遇潮氣生白煙(含HF)。",
+ hazard:"劇毒腐蝕，遇水/潮氣放出 HF 與硼酸，灼傷呼吸道。",
+ fire:"不燃；水霧冷卻容器、驅散煙，<b>勿直接灌水入洩漏源</b>。",
+ spill:"上風隔離；以乾石灰/蘇打吸收，少量噴水霧抑煙。",
+ aid:"比照HF/酸性氣體：移離給氧、大量沖水、送醫，注意氟中毒。",
+ ppe:"A級防護 + SCBA。"},
+
+{zh:"三氯化硼",en:"Boron trichloride",alias:"BCl3",cas:"10294-34-5",un:"1741",erg:"125",tox:null,cat:["tech"],water:true,gas:true,haz:"毒性腐蝕性高壓氣體",qty:null,
+ use:"半導體/面板金屬層(Al)乾式蝕刻、CVD。",
+ phys:"無色發煙氣/低沸點液，刺鼻；遇水劇烈水解放HCl。",
+ hazard:"劇毒腐蝕，遇水放HCl熱量；灼傷呼吸道與皮膚。",
+ fire:"不燃；水霧驅散冷卻，勿直射洩漏源。",
+ spill:"上風隔離、乾式吸收、防水接觸。",
+ aid:"移離給氧、大量沖水、送醫。",
+ ppe:"A級防護 + SCBA。"},
+
+{zh:"六氟化鎢",en:"Tungsten hexafluoride",alias:"WF6",cas:"7783-82-6",un:"2196",erg:"125",tox:null,cat:["tech"],water:true,gas:true,haz:"毒性腐蝕性高壓氣體",qty:null,
+ use:"半導體鎢插塞/鎢金屬層 CVD 沉積。",
+ phys:"無色~淡黃發煙氣/液，刺鼻；遇潮放HF。極重氣體。",
+ hazard:"劇毒腐蝕，水解放HF(氟中毒風險)；灼傷。",
+ fire:"不燃；水霧抑煙冷卻，勿直射源。",
+ spill:"上風、乾式吸收、防潮。",
+ aid:"比照HF：沖水、葡萄糖酸鈣、送醫。",
+ ppe:"A級防護 + SCBA。"},
+
+{zh:"三氟化氮",en:"Nitrogen trifluoride",alias:"NF3",cas:"7783-54-2",un:"2451",erg:"122",tox:null,cat:["tech"],water:false,gas:true,haz:"氧化性(助燃)高壓氣體",qty:null,
+ use:"半導體/面板 CVD 腔體清潔(電漿)、蝕刻。",
+ phys:"無色氣體、霉味；強氧化助燃、本身不燃。",
+ hazard:"強氧化劑助燃，受熱/電漿分解可放出 HF、NOx 等有毒腐蝕物；高濃度致缺氧。",
+ fire:"助燃；移除可燃物，大量水冷卻容器。注意分解毒氣。",
+ spill:"上風隔離、通風、移除引火源。",
+ aid:"吸入移離給氧；接觸分解物比照HF處理；送醫。",
+ ppe:"SCBA + 防護服。"},
+
+{zh:"二氯矽烷",en:"Dichlorosilane",alias:"DCS SiH2Cl2",cas:"4109-96-0",un:"2189",erg:"119",tox:null,cat:["tech"],water:true,gas:true,haz:"毒性 + 可燃性高壓氣體",qty:null,
+ use:"半導體磊晶矽/SiN/SiGe 之 CVD 氣源。",
+ phys:"無色發煙氣體，刺鼻；極易燃、寬爆炸範圍，遇潮放HCl。",
+ hazard:"極易燃(爆炸範圍極寬)，毒性腐蝕，遇水放HCl。",
+ fire:"關氣源優先；未止漏勿滅火焰，水霧冷卻鋼瓶。注意HCl煙。",
+ spill:"大範圍隔離、移除引火源、上風。",
+ aid:"移離給氧、接觸物大量沖水、送醫。",
+ ppe:"A級防護 + SCBA + 抗閃焰。"},
+
+{zh:"三氯矽烷",en:"Trichlorosilane",alias:"TCS SiHCl3",cas:"10025-78-2",un:"1295",erg:"139",tox:null,cat:["tech","oxid"],water:true,gas:false,haz:"第三類 發火性液體及禁水性物質（三氯矽甲烷）",qty:"第一種10／第二種50／第三種300公斤（附表一第三類列名；依危險性試驗分級。本品同時具極低閃火點易燃與遇水反應性）",
+ use:"多晶矽原料、磊晶 CVD 氣源。",
+ phys:"無色發煙易揮發液，刺鼻；極易燃、遇水劇烈水解放HCl與氫。",
+ hazard:"極易燃(閃火點<-20°C)、遇水反應放可燃氣與HCl；腐蝕刺激。",
+ fire:"<span class='forbid'>禁用水柱直接撲救(遇水反應)</span>；小火用乾粉/CO₂，大火退避、由源頭止漏、水霧冷卻周邊容器。",
+ spill:"乾砂/乾土圍堵，<b>避免水接觸</b>、移除引火源、上風。",
+ aid:"移離給氧；皮膚/眼大量沖水(沖洗利大於弊)、送醫。",
+ ppe:"防化服 + SCBA。"},
+
+{zh:"四氯化矽",en:"Silicon tetrachloride",alias:"SiCl4 TET",cas:"10026-04-7",un:"1818",erg:"157",tox:null,cat:["tech"],water:true,gas:false,haz:"非公共危險物品(腐蝕性·遇水反應)",qty:null,
+ use:"光纖預製棒、磊晶/CVD 矽源、多晶矽製程。",
+ phys:"無色發煙液，刺鼻；不燃但遇水/潮氣劇烈放HCl白煙。",
+ hazard:"遇水放大量HCl(腐蝕、刺激致肺水腫)；本身不燃。",
+ fire:"本身不燃；<b>勿直接加水</b>，以乾砂/乾粉控制周邊，水霧抑制HCl煙並冷卻容器。",
+ spill:"乾式吸收圍堵、避免水、上風、抑煙。",
+ aid:"吸入移離給氧；接觸大量沖水；送醫。",
+ ppe:"防酸服 + SCBA。"},
+
+{zh:"氫",en:"Hydrogen",alias:"H2 氫氣",cas:"1333-74-0",un:"1049",erg:"115",tox:null,cat:["tech"],water:false,gas:true,haz:"可燃性高壓氣體",qty:null,
+ use:"半導體退火/還原氣氛、磊晶載氣、燃料電池。",
+ phys:"無色無味極輕氣體；極易燃、爆炸範圍極寬(4-75%)，火焰近乎無色。",
+ hazard:"極易燃易爆，洩漏向上積聚於頂部死角；火焰不易察覺。窒息(排擠氧氣)。",
+ fire:"<b>關氣源優先</b>；未止漏前<span class='forbid'>勿滅火焰</span>，水冷卻周邊。注意無色火焰。",
+ spill:"消除引火源、通風(尤其頂部)、上風。",
+ aid:"窒息者移至新鮮空氣、給氧、送醫。",
+ ppe:"抗閃焰服 + SCBA(缺氧時)。"},
+
+{zh:"硒化氫",en:"Hydrogen selenide",alias:"H2Se",cas:"7783-07-5",un:"2202",erg:"117",tox:null,cat:["tech","toxic"],water:false,gas:true,haz:"毒性 + 可燃性高壓氣體",qty:null,
+ use:"化合物半導體/太陽能 CIGS、磊晶之硒摻雜源。",
+ phys:"無色氣體，腐爛蘿蔔味；劇毒易燃。",
+ hazard:"<b>極劇毒</b>(毒性高於砷化氫等級)，刺激致肺水腫，低濃度即危險；易燃。",
+ fire:"關氣源；水霧冷卻，未止漏勿滅火焰。燃燒生成有毒硒氧化物。",
+ spill:"大範圍隔離疏散、上風、低處警戒。",
+ aid:"吸入移離給氧、安靜送醫；觀察肺水腫。",
+ ppe:"A級防護 + SCBA。"},
+
+{zh:"鍺烷",en:"Germane",alias:"四氫化鍺 GeH4",cas:"7782-65-2",un:"2192",erg:"119",tox:null,cat:["tech","toxic"],water:false,gas:true,haz:"毒性 + 可燃性高壓氣體",qty:null,
+ use:"半導體 SiGe 磊晶、光纖、太陽能之鍺源。",
+ phys:"無色氣體，刺激味；劇毒易燃(可能自燃)。",
+ hazard:"劇毒(溶血,類似砷化氫)、易燃。",
+ fire:"關氣源；水霧冷卻鋼瓶、未止漏勿滅火焰。",
+ spill:"隔離疏散、上風。",
+ aid:"吸入移離給氧、安靜送醫(注意溶血)。",
+ ppe:"A級防護 + SCBA。"},
+
+{zh:"三氟化氯",en:"Chlorine trifluoride",alias:"ClF3",cas:"7790-91-2",un:"1749",erg:"124",tox:null,cat:["tech","toxic"],water:true,gas:true,haz:"極強氧化性毒性腐蝕氣體",qty:null,
+ use:"半導體 CVD 腔體清潔、蝕刻(超強氧化清潔)。",
+ phys:"無色~淡黃綠氣體/淡黃液，刺鼻甜味；<b>極強氧化劑</b>。",
+ hazard:"<b>極危險</b>：可氧化燃燒幾乎一切(含玻璃、水泥、石棉)，遇水/有機物劇烈爆炸放HF;劇毒腐蝕。",
+ fire:"<span class='forbid'>絕對禁水、禁泡沫、禁鹵素滅火劑</span>(均會劇烈反應)；移除一切可燃物，遠距撤離任其燒盡，僅以乾砂少量隔離。關氣源由專業處理。",
+ spill:"立即大範圍撤離、上風、嚴禁任何接觸；專業團隊處理。",
+ aid:"接觸比照HF(氟中毒)+灼傷：大量沖水、葡萄糖酸鈣、給氧、送醫。",
+ ppe:"A級全密封 + SCBA(僅受訓人員)。"},
+
+{zh:"溴化氫",en:"Hydrogen bromide",alias:"HBr 氫溴酸",cas:"10035-10-6",un:"1048",erg:"125",tox:null,cat:["tech"],water:false,gas:true,haz:"非公共危險物品(腐蝕性氣體)",qty:null,
+ use:"半導體乾式蝕刻(多晶矽/閘極)。",
+ phys:"無色發煙氣體，刺鼻；不燃、腐蝕。比空氣重。",
+ hazard:"強腐蝕刺激，灼傷呼吸道與眼、肺水腫。",
+ fire:"不燃；水霧驅散冷卻容器、勿直射洩漏口。",
+ spill:"上風、水稀釋/中和、圍堵。",
+ aid:"移離給氧、大量沖水、送醫。",
+ ppe:"防酸服 + SCBA。"},
+
+/* ---------- 科技廠常用液體 / 藥品 ---------- */
+{zh:"異丙醇",en:"Isopropyl alcohol",alias:"IPA 異丙基醇 2-丙醇",cas:"67-63-0",un:"1219",erg:"129",tox:null,cat:["tech","common"],water:false,gas:false,haz:"第四類-酒精類",qty:"400 公升",
+ use:"半導體/面板/PCB <b>晶圓乾燥、清洗、擦拭</b>之主力溶劑。",
+ phys:"無色易揮發液，酒精味；易燃(閃火點約12°C)。",
+ hazard:"易燃，蒸氣與空氣成爆炸性混合、可沿地面流竄回火；麻醉、刺激。",
+ fire:"<b>抗醇泡沫</b>、乾粉、CO₂；水溶性故普通泡沫易失效。水霧冷卻容器。",
+ spill:"消除引火源、通風、吸收材圍堵、防入下水道。",
+ aid:"吸入移離新鮮空氣；眼/皮膚沖水；誤食勿催吐、送醫。",
+ ppe:"防溶劑手套、護目鏡、抗閃焰(大量時)。"},
+
+{zh:"丙酮",en:"Acetone",alias:"二甲基酮 阿西通",cas:"67-64-1",un:"1090",erg:"127",tox:null,cat:["tech","common"],water:false,gas:false,haz:"第四類-第一石油類(水溶性)",qty:"400 公升",
+ use:"光阻去除、清洗、擦拭之常用溶劑。",
+ phys:"無色揮發液，香甜味；高度易燃(閃火點約-20°C)。",
+ hazard:"高度易燃、蒸氣可回火爆炸；刺激麻醉。",
+ fire:"抗醇泡沫、乾粉、CO₂；水霧冷卻容器，水柱滅火效果差。",
+ spill:"除引火源、通風、吸收圍堵。",
+ aid:"吸入移離；眼/皮膚沖水；送醫。",
+ ppe:"防溶劑手套、護目鏡。"},
+
+{zh:"硫酸",en:"Sulfuric acid",alias:"H2SO4 硫鏹水 SPM/Piranha",cas:"7664-93-9",un:"1830",erg:"137",tox:null,cat:["tech","common"],water:false,gas:false,haz:"非公共危險物品(強腐蝕·遇水放熱)",qty:null,
+ use:"半導體<b>SPM/Piranha 清洗(硫酸+雙氧水)</b>、晶圓清洗、電池。",
+ phys:"無色~棕色油狀液，無味；強腐蝕、強吸水放熱。不燃。",
+ hazard:"強腐蝕灼傷、<b>遇水劇烈放熱噴濺</b>；與金屬反應放氫(易燃);與有機物/氯酸鹽劇烈反應。",
+ fire:"本身不燃；<span class='forbid'>勿直接對酸體加水(噴濺)</span>，以乾粉/CO₂滅周邊火，大量水霧由遠端稀釋洩漏並冷卻容器。",
+ spill:"乾砂/蘇打/石灰中和吸收、圍堵，謹慎稀釋。",
+ aid:"皮膚/眼：<b>立即大量清水沖洗≧20-30分</b>、脫除污染衣物、送醫；誤食勿催吐、漱口、送醫。",
+ ppe:"防酸全身衣、面罩、耐酸手套。"},
+
+{zh:"硝酸",en:"Nitric acid",alias:"HNO3 硝鏹水",cas:"7697-37-2",un:"2031",erg:"157",tox:null,cat:["tech","common","oxid"],water:false,gas:false,haz:"第六類-氧化性液體",qty:"300 公斤",
+ use:"金屬蝕刻、清洗、王水成分、不鏽鋼鈍化。",
+ phys:"無色~黃色發煙液，刺鼻；強氧化、強腐蝕、不燃但助燃。",
+ hazard:"強氧化助燃+強腐蝕；與金屬/有機物反應放<b>有毒NOx棕煙</b>；遇水放熱。",
+ fire:"本身不燃但助燃；移除可燃物，大量水霧由遠端冷卻稀釋(注意噴濺與NOx)。",
+ spill:"蘇打/石灰中和、乾式吸收圍堵、防接觸有機物。",
+ aid:"大量清水沖洗灼傷處≧20分；吸入NOx移離給氧(肺水腫可延遲)、送醫。",
+ ppe:"防酸服 + 面罩/SCBA(有NOx時)。"},
+
+{zh:"過氧化氫 / 雙氧水",en:"Hydrogen peroxide",alias:"H2O2 雙氧水",cas:"7722-84-1",un:"2014",erg:"140",tox:null,cat:["tech","common","oxid"],water:false,gas:false,haz:"第六類-氧化性液體",qty:"300 公斤",
+ use:"SPM/SC-1/SC-2 清洗、蝕刻、漂白(高濃度具危險)。",
+ phys:"無色液，略刺激；強氧化、不燃但助燃，受熱/污染會分解放氧助燃。",
+ hazard:"強氧化助燃，與可燃物/金屬/有機物接觸可自燃或爆炸；高濃度灼傷;分解增壓爆容器。",
+ fire:"<b>以大量水稀釋冷卻</b>(本身助燃,須降溫並稀釋);移除可燃物。",
+ spill:"大量水稀釋沖走、移除可燃物、防密閉增壓。",
+ aid:"皮膚/眼大量沖水≧15分；吸入移離給氧；送醫。",
+ ppe:"護目鏡/面罩、耐酸鹼手套、防護衣。"},
+
+{zh:"磷酸",en:"Phosphoric acid",alias:"H3PO4",cas:"7664-38-2",un:"1805",erg:"154",tox:null,cat:["tech"],water:false,gas:false,haz:"非公共危險物品(腐蝕性)",qty:null,
+ use:"鋁/氮化矽濕蝕刻、面板製程、清洗。",
+ phys:"無色黏稠液/晶，無味；腐蝕、不燃。",
+ hazard:"腐蝕刺激灼傷眼皮膚；與金屬反應放氫。",
+ fire:"不燃；水霧冷卻容器、稀釋。",
+ spill:"蘇打/石灰中和、吸收圍堵。",
+ aid:"大量沖水、送醫。",
+ ppe:"耐酸手套、護目鏡。"},
+
+{zh:"氫氧化四甲基銨",en:"Tetramethylammonium hydroxide",alias:"TMAH 顯影液",cas:"75-59-2",un:"1719",erg:"154",tox:null,cat:["tech","toxic"],water:false,gas:false,haz:"非公共危險物品(強鹼·劇毒)",qty:null,
+ use:"半導體/面板<b>光阻顯影液</b>、矽蝕刻液(常見 2.38% 水溶液)。",
+ phys:"無色液，氨味；強鹼腐蝕、<b>具神經/全身急性毒性</b>。",
+ hazard:"<b>特殊危險</b>：除強鹼灼傷外，經皮膚吸收可致<b>呼吸肌麻痺、心律不整而猝死</b>(曾有作業致死案例)，大面積接觸即危及生命。",
+ fire:"不燃；水霧冷卻容器、稀釋。",
+ spill:"<b>嚴防皮膚接觸</b>；醋酸/弱酸謹慎中和、大量水稀釋、圍堵。",
+ aid:"<b>立即脫除污染衣物、大量清水沖洗皮膚≧30分</b>，即使無痛感也須<b>立即送醫並持續監測呼吸與心律</b>(中毒可快速惡化)。",
+ ppe:"防滲透全身防護衣、面罩、SCBA(大量時)。"},
+
+{zh:"甲苯",en:"Toluene",alias:"甲基苯 Toluol",cas:"108-88-3",un:"1294",erg:"130",tox:null,cat:["tech","toxic","common"],water:false,gas:false,haz:"第四類-第一石油類(非水溶性)",qty:"200 公升",
+ use:"清洗、稀釋、光阻/塗佈溶劑、黏著劑。",
+ phys:"無色芳香液；高度易燃(閃火點約4°C)。",
+ hazard:"高度易燃、蒸氣回火;中樞神經抑制、生殖毒性(屬環境部「關注化學物質」，非列管毒化物)。",
+ fire:"泡沫、乾粉、CO₂；水柱效果差，水霧冷卻容器。",
+ spill:"除引火源、通風、吸收圍堵、防入下水道。",
+ aid:"吸入移離給氧；皮膚/眼沖水；誤食勿催吐送醫。",
+ ppe:"防溶劑手套、護目鏡、抗閃焰。"},
+
+{zh:"二甲苯",en:"Xylene",alias:"二甲基苯 Xylol",cas:"1330-20-7",un:"1307",erg:"130",tox:null,cat:["tech","common"],water:false,gas:false,haz:"第四類-第二石油類(非水溶性)※視異構物/閃火點",qty:"1,000 公升",
+ use:"清洗、稀釋、塗佈溶劑。",
+ phys:"無色芳香液；易燃(閃火點約25-30°C，鄰位較低)。",
+ hazard:"易燃;神經抑制、刺激。混合二甲苯閃火點接近21°C臨界，分類請依實際SDS。",
+ fire:"泡沫、乾粉、CO₂；水霧冷卻容器。",
+ spill:"除引火源、吸收圍堵、通風。",
+ aid:"吸入移離給氧；接觸沖水；送醫。",
+ ppe:"防溶劑手套、護目鏡。"},
+
+{zh:"甲醇",en:"Methanol",alias:"木精 甲基醇 MeOH",cas:"67-56-1",un:"1230",erg:"131",tox:null,cat:["tech","common","toxic"],water:false,gas:false,haz:"第四類-酒精類",qty:"400 公升",
+ use:"清洗、溶劑、燃料。",
+ phys:"無色液，微酒精味；易燃(閃火點約11°C)，火焰近乎無色。",
+ hazard:"易燃、蒸氣回火；<b>劇毒</b>：誤食/吸收可致失明、代謝性酸中毒、死亡。",
+ fire:"抗醇泡沫、乾粉、CO₂；注意<b>幾乎無色火焰</b>，水霧冷卻容器。",
+ spill:"除引火源、通風、吸收圍堵。",
+ aid:"吸入移離給氧；<b>誤食/中毒儘速送醫</b>(可能需乙醇/fomepizole解毒)；接觸沖水。",
+ ppe:"防溶劑手套、護目鏡。"},
+
+{zh:"甲醛 / 福馬林",en:"Formaldehyde",alias:"蟻醛 福馬林 HCHO",cas:"50-00-0",un:"2209",erg:"132",tox:null,cat:["toxic","common"],water:false,gas:false,haz:"第四類 易燃液體－第三石油類（水溶性，指福馬林水溶液）",qty:"4,000 公升（福馬林水溶液為第三石油類水溶性；純甲醛為氣體不適用。實際分級依SDS閃火點，含甲醇之福馬林閃火點可能落在第二石油類）",
+ use:"消毒、樹脂、組織固定、清潔劑;部分電子製程。",
+ phys:"無色氣體/水溶液(福馬林),強烈刺鼻;水溶液可燃。",
+ hazard:"<b>確定致癌物(列管毒化物第2、3類)</b>;<span class='forbid'>第3類急毒性：高濃度蒸氣立即危害眼/呼吸道</span>、強刺激致灼傷、氣喘;蒸氣易燃。",
+ fire:"水溶液可燃;抗醇泡沫/乾粉/CO₂、水霧冷卻容器。",
+ spill:"通風、吸收圍堵、防接觸;低濃度可大量水稀釋。",
+ aid:"吸入移離給氧;眼/皮膚大量沖水;誤食漱口勿催吐、送醫。",
+ ppe:"SCBA/防毒面具、防護衣、護目鏡。"},
+
+/* ---------- 常見列管毒化物 ---------- */
+{zh:"苯",en:"Benzene",alias:"安息油 Benzol",cas:"71-43-2",un:"1114",erg:"130",tox:null,cat:["toxic","common"],water:false,gas:false,haz:"第四類-第一石油類(非水溶性)",qty:"200 公升",
+ use:"化工原料、溶劑(現多受限);部分實驗室。",
+ phys:"無色芳香液;高度易燃(閃火點約-11°C)。",
+ hazard:"高度易燃;<b>確定致癌(白血病)</b>之列管毒化物;神經抑制。",
+ fire:"泡沫、乾粉、CO₂;水霧冷卻容器,水柱效果差。",
+ spill:"除引火源、通風、吸收圍堵、防入下水道。",
+ aid:"吸入移離給氧;接觸沖水;誤食勿催吐送醫。",
+ ppe:"防溶劑手套、SCBA(大量時)。"},
+
+{zh:"氯乙烯",en:"Vinyl chloride",alias:"氯乙烯單體 VCM",cas:"75-01-4",un:"1086",erg:"116P",tox:[2],cat:["toxic"],water:false,gas:true,haz:"可燃性高壓氣體(致癌)",qty:null,
+ use:"PVC 塑膠單體原料。",
+ phys:"無色氣體,微甜味;極易燃、不穩定(P=可能聚合)。",
+ hazard:"極易燃易爆;<b>確定致癌(肝血管肉瘤)</b>列管毒化物;受熱聚合增壓爆炸。",
+ fire:"關氣源;未止漏勿滅火焰,大量水冷卻鋼瓶(防聚合爆炸/BLEVE)。",
+ spill:"大範圍隔離、除引火源、上風。",
+ aid:"吸入移離給氧;凍傷沖水;送醫。",
+ ppe:"抗閃焰 + SCBA。"},
+
+{zh:"二氯甲烷",en:"Dichloromethane",alias:"DCM 二氯甲烷 MC",cas:"75-09-2",un:"1593",erg:"160",tox:null,cat:["toxic","common"],water:false,gas:false,haz:"非公共危險物品(難燃·有毒)",qty:null,
+ use:"脫漆、清洗、萃取、黏著(PC/壓克力);部分電子製程。",
+ phys:"無色揮發液,氯仿味;難燃(高溫/強引火源下可燃)。",
+ hazard:"列管毒化物;吸入麻醉、體內代謝成CO致缺氧;疑似致癌;高溫分解放光氣/HCl。",
+ fire:"一般難燃;周邊火以乾粉/CO₂/水霧,冷卻容器;注意分解毒氣(光氣)。",
+ spill:"通風、吸收圍堵;蒸氣重沉低處。",
+ aid:"吸入移離給氧(注意CO中毒)、送醫;接觸沖水。",
+ ppe:"SCBA/有機蒸氣面具、防滲手套。"},
+
+{zh:"三氯乙烯",en:"Trichloroethylene",alias:"TCE 三氯乙烯",cas:"79-01-6",un:"1710",erg:"160",tox:[1,2],cat:["toxic","common"],water:false,gas:false,haz:"非公共危險物品(難燃·有毒)",qty:null,
+ use:"金屬/電子零件除油清洗(傳統)、萃取。",
+ phys:"無色液,氯仿味;難燃。",
+ hazard:"列管毒化物;<b>疑似致癌</b>、肝腎/神經毒;高溫分解放光氣、HCl。",
+ fire:"難燃;周邊火乾粉/CO₂/水霧,冷卻容器;防分解毒氣。",
+ spill:"通風、吸收圍堵;蒸氣沉低處。",
+ aid:"吸入移離給氧、送醫;接觸沖水。",
+ ppe:"SCBA/有機蒸氣面具、防滲手套。"},
+
+{zh:"四氯化碳",en:"Carbon tetrachloride",alias:"四氯甲烷 CTC",cas:"56-23-5",un:"1846",erg:"151",tox:null,cat:["toxic"],water:false,gas:false,haz:"非公共危險物品(不燃·劇毒)",qty:null,
+ use:"早期溶劑/滅火劑(現受蒙特婁公約管制禁用)。",
+ phys:"無色液,甜味;不燃。",
+ hazard:"列管毒化物;<b>肝腎劇毒、致癌、破壞臭氧層</b>;受熱放光氣、HCl。",
+ fire:"不燃;以周邊適用滅火劑,水霧冷卻容器;<b>嚴防受熱生光氣</b>。",
+ spill:"通風、吸收圍堵;蒸氣重沉低處。",
+ aid:"吸入移離給氧、送醫(肝腎監測);接觸沖水。",
+ ppe:"SCBA、防滲手套。"},
+
+{zh:"汞 / 水銀",en:"Mercury",alias:"水銀 Hg",cas:"7439-97-6",un:"2809",erg:"172",tox:null,cat:["toxic"],water:false,gas:false,haz:"非公共危險物品(劇毒重金屬)",qty:null,
+ use:"溫度計/壓力計、燈管、電氣開關、化工觸媒。",
+ phys:"銀白色液態金屬;常溫緩慢蒸發成劇毒蒸氣;不燃。",
+ hazard:"列管毒化物;蒸氣吸入致神經/腎傷害、震顫;慢性累積。室內洩漏蒸氣危害大。",
+ fire:"不燃;火場高溫使汞蒸氣大增,須SCBA、上風、通風。",
+ spill:"<b>勿用一般吸塵器(噴散蒸氣)</b>;以汞收集劑/針筒收集珠滴,硫磺粉處理殘留,密封回收。",
+ aid:"吸入移離新鮮空氣、送醫(尿汞檢測);接觸沖洗。",
+ ppe:"SCBA/汞蒸氣面具、防護手套。"},
+
+{zh:"氰化鈉 / 氰化物",en:"Sodium cyanide",alias:"山奈 NaCN 氰化鉀KCN",cas:"143-33-9",un:"1689",erg:"157",tox:[3],cat:["toxic"],water:true,gas:false,haz:"非公共危險物品(劇毒·遇酸放劇毒氣)",qty:null,
+ use:"電鍍(金/銀)、冶金提煉、化工。",
+ phys:"白色晶/塊,微杏仁味;不燃但<b>遇酸/水放出劇毒氰化氫(HCN)氣體</b>。",
+ hazard:"<b>極劇毒</b>列管毒化物;阻斷細胞呼吸,少量即可致命且快速;<span class='forbid'>遇酸即放HCN氣</span>。",
+ fire:"本身不燃;<span class='forbid'>禁用含酸/CO₂直接作用於物質(CO₂與水可能助放HCN)</span>;周邊火以乾粉,大量水冷卻並嚴防酸接觸。",
+ spill:"<b>絕對隔離酸類</b>;乾式收集密封,勿沖入可能接觸酸之排水。",
+ aid:"<b>立即移離、給100%氧</b>;<b>備用氰化物解毒劑(亞硝酸鹽/硫代硫酸鈉/羥鈷胺)立即使用並送醫</b>;脫除污染衣物、沖洗。每秒關鍵。",
+ ppe:"A級防護 + SCBA;備氰化物解毒包。"},
+
+{zh:"氰化氫",en:"Hydrogen cyanide",alias:"HCN 氫氰酸 普魯士酸",cas:"74-90-8",un:"1051",erg:"117",tox:[3],cat:["toxic"],water:false,gas:true,haz:"可燃性高壓/劇毒(特殊易燃物級)",qty:null,
+ use:"化工合成(壓克力、農藥)、燻蒸;火場燃燒含氮塑料亦生成。",
+ phys:"無色氣體/易揮發液,苦杏仁味(部分人聞不到);劇毒、易燃。",
+ hazard:"<b>極劇毒</b>列管毒化物,阻斷細胞呼吸,吸入數分鐘致死;易燃易爆。",
+ fire:"關氣源;未止漏前勿滅火焰,水霧冷卻;全程SCBA上風。",
+ spill:"大範圍隔離疏散、上風、除引火源。",
+ aid:"<b>立即移離給100%氧;立即施用氰化物解毒劑並送醫</b>。",
+ ppe:"A級防護 + SCBA;備氰化物解毒包。"},
+
+{zh:"二氧化硫",en:"Sulfur dioxide",alias:"SO2 亞硫酸酐",cas:"7446-09-5",un:"1079",erg:"125",tox:null,cat:["toxic"],water:false,gas:true,haz:"毒性高壓氣體(不燃)",qty:null,
+ use:"漂白、防腐、化工、燻蒸;含硫物燃燒副產物。",
+ phys:"無色氣體,強刺鼻硫味;不燃。比空氣重。",
+ hazard:"強刺激致呼吸道灼傷、支氣管痙攣、肺水腫;列管毒化物。",
+ fire:"不燃;水霧驅散氣雲、冷卻容器,勿直射洩漏口。",
+ spill:"上風、低處警戒、水幕壓制。",
+ aid:"吸入移離給氧、半坐臥、勿運動、送醫;眼/皮膚沖水。",
+ ppe:"SCBA + 防護服。"},
+
+{zh:"丙烯腈",en:"Acrylonitrile",alias:"氰乙烯 VCN",cas:"107-13-1",un:"1093",erg:"131P",tox:null,cat:["toxic"],water:false,gas:false,haz:"第四類-第一石油類(非水溶性)",qty:"200 公升",
+ use:"ABS/腈綸/橡膠合成單體。",
+ phys:"無色~淡黃液,微辛味;高度易燃、可聚合(P);有毒。",
+ hazard:"高度易燃;列管毒化物、<b>致癌</b>;體內釋出氰化物毒性;受熱聚合爆炸。",
+ fire:"抗醇泡沫/乾粉/CO₂;水霧冷卻容器(防聚合);全程SCBA(燃燒生HCN/NOx)。",
+ spill:"除引火源、上風、吸收圍堵。",
+ aid:"比照氰化物中毒:移離給氧、必要時氰化物解毒劑、送醫;接觸沖水。",
+ ppe:"A級防護 + SCBA。"},
+
+{zh:"甲苯二異氰酸酯",en:"Toluene diisocyanate",alias:"TDI",cas:"584-84-9",un:"2078",erg:"156",tox:null,cat:["toxic"],water:true,gas:false,haz:"非公共危險物品(有毒致敏)",qty:null,
+ use:"聚氨酯(PU)泡棉、塗料、黏著劑原料。",
+ phys:"無色~淡黃液,刺鼻;遇水反應放CO₂(增壓)。",
+ hazard:"列管毒化物第3類;<span class='forbid'>第3類急毒性物質</span>、<b>強呼吸道致敏致氣喘</b>、刺激;遇水/胺反應放熱增壓。",
+ fire:"乾粉/CO₂/泡沫;<b>水會反應</b>,僅以水霧冷卻容器、勿直灌;燃燒生HCN/NOx。",
+ spill:"勿用大量水;以乾式吸收/中和劑(含氨水/界面活性劑配方)處理、圍堵。",
+ aid:"吸入移離給氧(氣喘觀察)、送醫;接觸大量沖水。",
+ ppe:"SCBA + 防護衣。"},
+
+{zh:"酚 / 苯酚",en:"Phenol",alias:"石炭酸 苯酚 Carbolic acid",cas:"108-95-2",un:"1671",erg:"153",tox:null,cat:["toxic"],water:false,gas:false,haz:"非公共危險物品(有毒腐蝕)",qty:null,
+ use:"酚醛樹脂、消毒、化工、藥品原料。",
+ phys:"白色~粉紅結晶/液,特殊甜藥味;可燃。",
+ hazard:"列管毒化物;腐蝕灼傷且<b>經皮吸收致全身中毒(神經、心律、腎)</b>;局部麻痺感掩蓋灼傷。",
+ fire:"乾粉/CO₂/泡沫/水霧;冷卻容器;燃燒生有毒煙。",
+ spill:"吸收圍堵、防接觸、防入水體。",
+ aid:"<b>立即脫除污衣、大量清水或聚乙二醇沖洗皮膚</b>、送醫(監測全身中毒);眼大量沖水。",
+ ppe:"防滲防護衣、面罩、SCBA(大量時)。"},
+
+{zh:"環氧乙烷",en:"Ethylene oxide",alias:"EO 氧化乙烯 ETO",cas:"75-21-8",un:"1040",erg:"119P",tox:null,cat:["toxic"],water:false,gas:true,haz:"可燃性高壓氣體(致癌·可聚合)",qty:null,
+ use:"醫材/食品滅菌、界面活性劑/乙二醇原料。",
+ phys:"無色氣體/低沸液,醚味;極易燃、可自聚爆炸(P)。",
+ hazard:"極易燃易爆(極寬範圍、可無空氣分解爆炸);列管毒化物、<b>致癌、致突變</b>;刺激麻醉。",
+ fire:"關氣源;未止漏勿滅火焰,大量水冷卻容器(防聚合爆炸);遠距。",
+ spill:"大範圍隔離、除引火源、上風、水霧抑制。",
+ aid:"吸入移離給氧、送醫;凍傷/接觸沖水。",
+ ppe:"抗閃焰 + SCBA。"},
+
+{zh:"1,3-丁二烯",en:"1,3-Butadiene",alias:"丁二烯 BD",cas:"106-99-0",un:"1010",erg:"116P",tox:[2],cat:["toxic"],water:false,gas:true,haz:"可燃性高壓氣體(致癌·可聚合)",qty:null,
+ use:"合成橡膠(SBR/BR)、ABS 樹脂單體。",
+ phys:"無色氣體,微芳香;極易燃、可聚合(P)。",
+ hazard:"極易燃易爆;列管毒化物、<b>致癌</b>;受熱/久放聚合增壓。",
+ fire:"關氣源;未止漏勿滅火焰,大量水冷卻鋼瓶(防BLEVE/聚合)。",
+ spill:"大範圍隔離、除引火源、上風。",
+ aid:"吸入移離給氧;凍傷沖水;送醫。",
+ ppe:"抗閃焰 + SCBA。"},
+
+/* ---------- 常見易燃 / 公共危險物品 ---------- */
+{zh:"汽油",en:"Gasoline",alias:"無鉛汽油 Petrol",cas:"8006-61-9",un:"1203",erg:"128",tox:null,cat:["common"],water:false,gas:false,haz:"第四類-第一石油類(非水溶性)",qty:"200 公升",
+ use:"車輛燃料、清洗(不建議)。",
+ phys:"淡黃揮發液,汽油味;高度易燃(閃火點約-43°C)。",
+ hazard:"高度易燃、蒸氣重沿地流竄回火爆炸;含苯具毒性。",
+ fire:"泡沫(首選)、乾粉、CO₂;<span class='forbid'>勿用水柱(漂浮擴大火勢)</span>,水霧冷卻容器。",
+ spill:"除引火源、通風、泡沫覆蓋抑蒸氣、圍堵防入下水道。",
+ aid:"吸入移離給氧;接觸沖水;誤食勿催吐送醫。",
+ ppe:"抗閃焰服、防溶劑手套。"},
+
+{zh:"柴油",en:"Diesel fuel",alias:"高速柴油 輕油",cas:"68334-30-5",un:"1202",erg:"128",tox:null,cat:["common"],water:false,gas:false,haz:"第四類-第二石油類(非水溶性)",qty:"1,000 公升",
+ use:"車輛/發電機/鍋爐燃料。",
+ phys:"淡黃油狀液,油味;可燃(閃火點約>55°C)。",
+ hazard:"可燃(較汽油難點燃但燃燒猛烈);霧化/吸附於多孔物時易燃。",
+ fire:"泡沫、乾粉、CO₂;水霧冷卻容器。",
+ spill:"吸收圍堵、防入水體、除引火源。",
+ aid:"吸入移離;接觸沖水;誤食勿催吐送醫。",
+ ppe:"防溶劑手套、護目鏡。"},
+
+{zh:"乙醇",en:"Ethanol",alias:"酒精 EtOH 乙基醇",cas:"64-17-5",un:"1170",erg:"127",tox:null,cat:["common"],water:false,gas:false,haz:"第四類-酒精類",qty:"400 公升",
+ use:"消毒、清洗、溶劑、燃料。",
+ phys:"無色液,酒味;易燃(閃火點約13°C),火焰偏淡。",
+ hazard:"易燃、蒸氣回火;水溶性使普通泡沫失效。",
+ fire:"<b>抗醇泡沫</b>、乾粉、CO₂;水霧冷卻容器。",
+ spill:"除引火源、通風、吸收圍堵。",
+ aid:"吸入移離;接觸沖水;送醫。",
+ ppe:"護目鏡、手套。"},
+
+{zh:"乙醚",en:"Diethyl ether",alias:"二乙醚 乙醚 Ether",cas:"60-29-7",un:"1155",erg:"127",tox:null,cat:["common"],water:false,gas:false,haz:"第四類-特殊易燃物",qty:"50 公升",
+ use:"萃取、溶劑、麻醉(舊)。",
+ phys:"無色極揮發液,甜味;<b>極度易燃(閃火點約-45°C)</b>、久置生爆炸性過氧化物。",
+ hazard:"極易燃、蒸氣遠距回火;久存生過氧化物受震/受熱爆炸;麻醉。",
+ fire:"乾粉、CO₂、抗醇泡沫;<span class='forbid'>勿用水柱</span>,水霧冷卻容器;遠距。",
+ spill:"除一切引火源(含靜電)、強通風、吸收圍堵。",
+ aid:"吸入移離給氧;接觸沖水;送醫。",
+ ppe:"抗閃焰、防靜電、護目鏡。"},
+
+{zh:"二硫化碳",en:"Carbon disulfide",alias:"CS2",cas:"75-15-0",un:"1131",erg:"131",tox:null,cat:["toxic","common"],water:false,gas:false,haz:"第四類-特殊易燃物",qty:"50 公升",
+ use:"嫘縈/玻璃紙、橡膠硫化促進、化工溶劑。",
+ phys:"無色~黃液,腐臭味;<b>極易燃(自燃點僅約90-100°C)</b>、有毒。",
+ hazard:"極易燃(極低自燃點,熱表面/燈泡即可點燃);列管毒化物、神經/生殖毒;蒸氣重。",
+ fire:"<b>以水覆蓋抑制蒸氣(CS2比水重沉底,水可隔絕)</b>、泡沫、乾粉、CO₂;冷卻容器、移除熱源。",
+ spill:"<b>以水覆蓋</b>抑蒸氣、除一切熱源/引火源、上風。",
+ aid:"吸入移離給氧、送醫(神經毒);接觸沖水。",
+ ppe:"抗閃焰 + SCBA。"},
+
+{zh:"乙醛",en:"Acetaldehyde",alias:"醋醛 乙醛",cas:"75-07-0",un:"1089",erg:"129P",tox:null,cat:["common","toxic"],water:false,gas:false,haz:"第四類-特殊易燃物",qty:"50 公升",
+ use:"醋酸/化工原料、香料。",
+ phys:"無色易揮發液/氣,刺果味;<b>極易燃</b>、可聚合(P)。",
+ hazard:"極易燃、蒸氣回火;刺激、疑似致癌;受熱聚合。",
+ fire:"抗醇泡沫、乾粉、CO₂;水霧冷卻容器;遠距。",
+ spill:"除引火源、通風、吸收圍堵。",
+ aid:"吸入移離給氧;接觸沖水;送醫。",
+ ppe:"抗閃焰、護目鏡、防毒面具。"},
+
+{zh:"環氧丙烷",en:"Propylene oxide",alias:"氧化丙烯 PO",cas:"75-56-9",un:"1280",erg:"127P",tox:null,cat:["toxic","common"],water:false,gas:false,haz:"第四類-特殊易燃物",qty:"50 公升",
+ use:"聚醚多元醇/PU、丙二醇原料、燻蒸。",
+ phys:"無色易揮發液,醚味;極易燃、可聚合(P)。",
+ hazard:"極易燃易爆;列管毒化物、致癌之虞;聚合增壓。",
+ fire:"抗醇泡沫、乾粉、CO₂;水霧冷卻容器(防聚合);遠距。",
+ spill:"除引火源、上風、吸收圍堵。",
+ aid:"吸入移離給氧;接觸沖水;送醫。",
+ ppe:"抗閃焰 + SCBA。"},
+
+{zh:"醋酸乙酯",en:"Ethyl acetate",alias:"乙酸乙酯 EA",cas:"141-78-6",un:"1173",erg:"129",tox:null,cat:["common","tech"],water:false,gas:false,haz:"第四類-第一石油類(非水溶性)",qty:"200 公升",
+ use:"塗料/油墨/黏著劑溶劑、清洗。",
+ phys:"無色液,果香;易燃(閃火點約-4°C)。",
+ hazard:"易燃、蒸氣回火;刺激麻醉。",
+ fire:"抗醇泡沫、乾粉、CO₂;水霧冷卻容器。",
+ spill:"除引火源、通風、吸收圍堵。",
+ aid:"吸入移離;接觸沖水;送醫。",
+ ppe:"防溶劑手套、護目鏡。"},
+
+{zh:"正己烷",en:"n-Hexane",alias:"己烷 Hexane",cas:"110-54-3",un:"1208",erg:"128",tox:null,cat:["common","tech"],water:false,gas:false,haz:"第四類-第一石油類(非水溶性)",qty:"200 公升",
+ use:"萃取(食用油)、清洗、黏著劑溶劑、電子清洗。",
+ phys:"無色液,汽油味;高度易燃(閃火點約-22°C)。",
+ hazard:"高度易燃、蒸氣回火;<b>慢性周邊神經病變</b>(2,5-己二酮)。",
+ fire:"泡沫、乾粉、CO₂;<span class='forbid'>勿用水柱</span>,水霧冷卻容器。",
+ spill:"除引火源、通風、吸收圍堵、防入下水道。",
+ aid:"吸入移離給氧;接觸沖水;送醫(神經)。",
+ ppe:"抗閃焰、防溶劑手套。"},
+
+/* ---------- 氧化劑 / 反應性固體 ---------- */
+{zh:"氯酸鉀",en:"Potassium chlorate",alias:"KClO3",cas:"3811-04-9",un:"1485",erg:"140",tox:null,cat:["oxid"],water:false,gas:false,haz:"第一類-氧化性固體",qty:"50 公斤(第一級)",
+ use:"火柴、煙火、氧化劑、除草。",
+ phys:"白色晶/粉,無味;強氧化、不燃但劇助燃。",
+ hazard:"<b>強氧化劑</b>,與可燃物/硫/磷/有機物混合受摩擦撞擊即爆;放氧助燃。",
+ fire:"<b>大量水</b>降溫滅火(溶解移除氧化劑);移開可燃物;勿用乾粉(可能含可燃成分)。",
+ spill:"<b>勿與可燃物/有機物混合</b>;乾式輕收、避免摩擦,大量水沖稀。",
+ aid:"誤食/接觸沖洗、送醫(高鐵血紅蛋白血症)。",
+ ppe:"護目鏡、手套、防護衣。"},
+
+{zh:"過錳酸鉀",en:"Potassium permanganate",alias:"灰錳氧 KMnO4",cas:"7722-64-7",un:"1490",erg:"140",tox:null,cat:["oxid"],water:false,gas:false,haz:"第一類 氧化性固體（過錳酸鹽類）",qty:"1,000 公斤（過錳酸鹽類通常列第三級；級別最終依氧化性試驗認定）",
+ use:"水處理/消毒、氧化劑、化工。",
+ phys:"紫黑色晶,無味;強氧化、不燃但助燃。",
+ hazard:"強氧化劑,與甘油/有機物/濃酸接觸可起火爆炸;腐蝕刺激。",
+ fire:"<b>大量水</b>;移開可燃物。",
+ spill:"勿混可燃物;乾式收集、大量水沖稀。",
+ aid:"接觸大量沖水;誤食漱口送醫。",
+ ppe:"護目鏡、手套。"},
+
+{zh:"硝酸銨",en:"Ammonium nitrate",alias:"NH4NO3",cas:"6484-52-2",un:"1942",erg:"140",tox:null,cat:["oxid"],water:false,gas:false,haz:"第一類 氧化性固體（硝酸鹽類）",qty:"1,000 公斤（硝酸鹽類通常列第三級；惟大量堆積具爆轟性，另受爆裂物相關規範）",
+ use:"肥料、工業炸藥/ANFO 原料、冷敷包。",
+ phys:"白色晶/粒,無味;強氧化、不燃但助燃;<b>大量受熱/受污染可爆轟</b>。",
+ hazard:"強氧化劑;<b>大量堆積受熱或受可燃物污染可發生劇烈爆炸(歷史重大災例)</b>;受熱放有毒NOx。",
+ fire:"<b>大量水</b>遠距灌救;<span class='forbid'>大量起火且密閉/受限時應撤離(爆轟風險)</span>,勿單靠少量滅火劑。",
+ spill:"勿混可燃/油類;清掃回收、大量水沖稀。",
+ aid:"接觸沖水;吸入NOx移離給氧送醫。",
+ ppe:"護目鏡、手套、SCBA(火場NOx)。"},
+
+{zh:"過氯酸",en:"Perchloric acid",alias:"HClO4 過氯酸",cas:"7601-90-3",un:"1873",erg:"143",tox:null,cat:["oxid"],water:false,gas:false,haz:"第六類-氧化性液體",qty:"300 公斤",
+ use:"分析化學、蝕刻、火箭推進相關。",
+ phys:"無色發煙液,刺鼻;<b>強氧化+強腐蝕</b>,濃/熱時與有機物接觸爆炸。",
+ hazard:"強氧化助燃+強腐蝕;與有機物/還原劑/木材接觸可猛烈爆炸;乾燥過氯酸鹽極敏感。",
+ fire:"<b>大量水</b>稀釋冷卻;移開可燃物;遠距(爆炸風險)。",
+ spill:"大量水稀釋、移除有機物、圍堵;勿用有機吸收材。",
+ aid:"大量沖水≧20分、送醫;吸入移離給氧。",
+ ppe:"防酸服、面罩、SCBA。"},
+
+{zh:"黃磷 / 白磷",en:"White / Yellow phosphorus",alias:"白磷 P4",cas:"7723-14-0",un:"1381",erg:"136",tox:null,cat:["oxid","toxic"],water:false,gas:false,haz:"第三類-發火性固體",qty:"20 公斤",
+ use:"化工、磷酸/磷化物製造、煙幕/曳光(軍用)。",
+ phys:"白~淡黃蠟狀固體,蒜味;<b>暴露空氣即自燃</b>;劇毒;通常存於水中。",
+ hazard:"<b>接觸空氣自燃</b>燃燒生成有毒P₂O₅濃煙;劇毒(肝/骨)、灼傷;列管毒化物。",
+ fire:"<b>以大量水/濕砂覆蓋滅火並保持濕潤</b>(乾燥即復燃);燃燒煙劇毒須SCBA上風。",
+ spill:"<b>保持浸水</b>、以濕砂覆蓋、銅鹽/碳酸鈉處理、勿乾燥。",
+ aid:"灼傷部位<b>大量水沖並保持濕潤/浸水</b>、移除磷粒、勿塗油膏、立即送醫(全身中毒)。",
+ ppe:"防護衣、面罩、SCBA;備清水。"},
+
+{zh:"金屬鈉",en:"Sodium (metal)",alias:"鈉 Na",cas:"7440-23-5",un:"1428",erg:"138",tox:null,cat:["oxid"],water:true,gas:false,haz:"第三類-禁水性物質",qty:"10 公斤",
+ use:"化工還原劑、製鈉化合物、實驗室乾燥溶劑。",
+ phys:"銀白柔軟金屬,無味;<b>遇水劇烈反應放氫並起火/爆炸</b>;通常存於煤油/礦油。",
+ hazard:"<b>禁水性</b>:遇水/潮氣/酸劇烈放氫+大量熱致起火爆炸;強腐蝕鹼性灼傷。",
+ fire:"<span class='forbid'>絕對禁水、禁CO₂、禁泡沫、禁鹵化物</span>;以<b>D類金屬火災乾粉、乾砂、乾氯化鈉/石墨</b>覆蓋窒息。",
+ spill:"保持乾燥、以乾砂覆蓋、隔離水源、勿接觸潮氣。",
+ aid:"灼傷:先拭除殘粒再大量沖水(矛盾須權衡,以D類處理優先)、送醫;眼大量沖水。",
+ ppe:"乾燥防護、面罩、防火手套;備D類乾粉/乾砂。"},
+
+{zh:"碳化鈣 / 電石",en:"Calcium carbide",alias:"電石 CaC2",cas:"75-20-7",un:"1402",erg:"138",tox:null,cat:["oxid"],water:true,gas:false,haz:"第三類-禁水性物質",qty:"300 公斤",
+ use:"產乙炔氣(焊接/照明)、化工、煉鋼脫硫。",
+ phys:"灰黑色塊/粒,電石味;<b>遇水放出易燃乙炔氣</b>。",
+ hazard:"<b>禁水性</b>:遇水/潮氣放乙炔(極易燃易爆)+熱;粉塵刺激。",
+ fire:"<span class='forbid'>絕對禁水</span>;以乾粉、乾砂、CO₂(對固體)處理;移除水源,讓乙炔安全燒盡或驅散。",
+ spill:"保持乾燥、乾式收集密封、隔離水/潮氣。",
+ aid:"接觸沖洗(乾拭後);吸入移離給氧;送醫。",
+ ppe:"乾燥防護、護目鏡、防塵。"},
+];
+
+/* ---------- 追加科技廠常用化學品（第二批） ---------- */
+DATA.push(
+{zh:"氟",en:"Fluorine",alias:"F2 氟氣",cas:"7782-41-4",un:"1045",erg:"124",tox:null,cat:["tech"],water:true,gas:true,haz:"極強氧化性毒性高壓氣體",qty:null,
+ use:"半導體 NF3 替代之腔體清潔、蝕刻;含氟化合物製造。",
+ phys:"淡黃綠氣體,強烈刺鼻;<b>已知最強氧化劑之一</b>、劇毒腐蝕、不燃但使幾乎一切燃燒。",
+ hazard:"<b>極危險</b>:幾乎可氧化點燃所有物質(含水、玻璃),遇水放HF與O₂;劇毒腐蝕灼傷。",
+ fire:"<span class='forbid'>禁水、禁一般滅火劑</span>;關氣源優先,移除可燃物,遠距以大量水冷卻『周邊』容器(勿對氟源);專業處理。",
+ spill:"立即大範圍撤離、上風、嚴禁接觸;專業團隊。",
+ aid:"比照HF:大量沖水、葡萄糖酸鈣、給氧、送醫。",
+ ppe:"A級全密封 + SCBA(僅受訓人員)。"},
+
+{zh:"四氯化鈦",en:"Titanium tetrachloride",alias:"TiCl4 TET",cas:"7550-45-0",un:"1838",erg:"137",tox:null,cat:["tech"],water:true,gas:false,haz:"非公共危險物品(腐蝕性·遇水反應)",qty:null,
+ use:"半導體 Ti/TiN 阻障層 CVD/ALD 前驅物;鈦白粉、光纖。",
+ phys:"無色~淡黃發煙液,刺鼻;不燃但遇潮氣劇烈水解放大量HCl白煙。",
+ hazard:"遇水放大量HCl(腐蝕、刺激致肺水腫)+熱;灼傷。",
+ fire:"本身不燃;<b>勿直接加水</b>,以乾砂/乾粉控制,水霧抑HCl煙並冷卻容器。",
+ spill:"乾式吸收圍堵、避免水、上風、抑煙。",
+ aid:"吸入移離給氧;接觸大量沖水;送醫。",
+ ppe:"防酸服 + SCBA。"},
+
+{zh:"四氟化矽",en:"Silicon tetrafluoride",alias:"SiF4",cas:"7783-61-1",un:"1859",erg:"125",tox:null,cat:["tech"],water:true,gas:true,haz:"毒性腐蝕性高壓氣體",qty:null,
+ use:"半導體摻雜/沉積、含氟製程。",
+ phys:"無色發煙氣體,刺鼻;不燃,遇潮氣放HF與矽酸。",
+ hazard:"劇毒腐蝕,遇水放HF(氟中毒風險);灼傷呼吸道。",
+ fire:"不燃;水霧抑煙冷卻容器,勿直射洩漏源。",
+ spill:"上風、乾式吸收、防潮。",
+ aid:"比照HF:沖水、葡萄糖酸鈣、給氧、送醫。",
+ ppe:"A級防護 + SCBA。"},
+
+{zh:"銻化氫",en:"Stibine",alias:"SbH3 銻化三氫",cas:"7803-52-3",un:"2676",erg:"119",tox:null,cat:["tech","toxic"],water:false,gas:true,haz:"毒性 + 可燃性高壓氣體",qty:null,
+ use:"化合物半導體之銻摻雜源、磊晶。",
+ phys:"無色氣體,腐臭(硫化氫樣)味;劇毒易燃。",
+ hazard:"劇毒(強溶血,類砷化氫)、易燃。",
+ fire:"關氣源;水霧冷卻鋼瓶,未止漏勿滅火焰。",
+ spill:"大範圍隔離疏散、上風。",
+ aid:"吸入移離給氧、安靜送醫(注意溶血/腎)。",
+ ppe:"A級防護 + SCBA。"},
+
+{zh:"三甲基鋁",en:"Trimethylaluminium",alias:"TMA TMAl Al(CH3)3",cas:"75-24-1",un:"3394",erg:"135",tox:null,cat:["tech"],water:true,gas:false,haz:"第三類 發火性液體及禁水性物質（烷基鋁）",qty:"10 公斤（烷基鋁）",
+ use:"ALD/CVD 高介電(Al2O3)、MOCVD 之鋁前驅物。",
+ phys:"無色發煙液;<b>接觸空氣即自燃、遇水爆炸性反應</b>放甲烷。",
+ hazard:"<b>自燃性 + 禁水性</b>:遇空氣自燃、遇水/醇劇烈爆炸放可燃氣;灼傷。",
+ fire:"<span class='forbid'>絕對禁水、禁泡沫、禁CO₂</span>;以<b>D類乾粉、乾砂</b>覆蓋窒息;遠距冷卻周邊。",
+ spill:"<b>保持隔絕空氣與水</b>,乾砂覆蓋、惰氣環境處理。",
+ aid:"灼傷以D類處理後送醫;接觸大量沖水(權衡)、就醫。",
+ ppe:"防火/抗閃焰、面罩、SCBA;備D類乾粉。"},
+
+{zh:"三甲基鎵",en:"Trimethylgallium",alias:"TMGa TMG Ga(CH3)3",cas:"1445-79-0",un:"3394",erg:"135",tox:null,cat:["tech"],water:true,gas:false,haz:"第三類 發火性液體及禁水性物質（有機金屬化合物）",qty:"第一種 10 公斤（有機金屬化合物，依危險性分第一種10／第二種50公斤）",
+ use:"化合物半導體(LED/GaN/GaAs)MOCVD 之鎵前驅物。",
+ phys:"無色發煙液;<b>接觸空氣自燃、遇水劇烈反應</b>放甲烷。",
+ hazard:"<b>自燃性 + 禁水性</b>;遇水/醇爆炸性放可燃氣;灼傷、鎵毒性。",
+ fire:"<span class='forbid'>禁水、禁泡沫</span>;以D類乾粉、乾砂窒息;遠距冷卻周邊。",
+ spill:"隔絕空氣與水、乾砂覆蓋、惰氣處理。",
+ aid:"灼傷以D類處理後送醫。",
+ ppe:"抗閃焰、面罩、SCBA;備D類乾粉。"},
+
+{zh:"四乙氧基矽烷",en:"Tetraethyl orthosilicate",alias:"TEOS Si(OC2H5)4",cas:"78-10-4",un:"",erg:"129",tox:null,cat:["tech"],water:false,gas:false,haz:"第四類-第二石油類(非水溶性)",qty:"1,000 公升",
+ use:"半導體 PECVD/LPCVD 二氧化矽(SiO₂)介電層之主要前驅物。",
+ phys:"無色液,微醇味;可燃(閃火點約45°C);遇水緩慢水解放乙醇。",
+ hazard:"可燃;刺激眼/呼吸道;受熱蒸氣可形成爆炸性混合。",
+ fire:"乾粉、CO₂、抗醇泡沫、水霧;冷卻容器。",
+ spill:"除引火源、通風、吸收圍堵。",
+ aid:"吸入移離給氧;接觸沖水;送醫。",
+ ppe:"防溶劑手套、護目鏡。"},
+
+{zh:"氫氧化鈉",en:"Sodium hydroxide",alias:"NaOH 燒鹼 苛性鈉",cas:"1310-73-2",un:"1823",erg:"154",tox:null,cat:["tech","common"],water:true,gas:false,haz:"非公共危險物品(強鹼腐蝕)",qty:null,
+ use:"清洗、廢水中和、蝕刻、剝離;化工。",
+ phys:"白色固體/片/溶液,無味;<b>溶水大量放熱</b>;不燃。",
+ hazard:"強鹼劇腐蝕,灼傷皮膚眼(較酸更深);與鋁/鋅等放氫(易燃);溶水噴濺。",
+ fire:"不燃;水霧冷卻容器;注意與金屬反應放氫。",
+ spill:"乾式收集或大量水稀釋(防放熱噴濺)、弱酸謹慎中和、圍堵。",
+ aid:"皮膚/眼<b>立即大量清水沖洗≧20-30分</b>(鹼灼傷須久沖)、送醫。",
+ ppe:"防鹼全身衣、面罩、耐鹼手套。"},
+
+{zh:"氫氧化鉀",en:"Potassium hydroxide",alias:"KOH 苛性鉀",cas:"1310-58-3",un:"1813",erg:"154",tox:null,cat:["tech","common"],water:true,gas:false,haz:"非公共危險物品(強鹼腐蝕)",qty:null,
+ use:"矽異向性蝕刻液、清洗、電池電解液。",
+ phys:"白色固體/溶液,無味;溶水放熱;不燃。",
+ hazard:"強鹼劇腐蝕,灼傷深;與金屬放氫;溶水噴濺。",
+ fire:"不燃;水霧冷卻容器;注意放氫。",
+ spill:"乾式收集或大量水稀釋、弱酸中和、圍堵。",
+ aid:"皮膚/眼大量清水沖洗≧20-30分、送醫。",
+ ppe:"防鹼全身衣、面罩、耐鹼手套。"},
+
+{zh:"氨水 / 氫氧化銨",en:"Ammonium hydroxide",alias:"氨水 NH4OH SC-1",cas:"1336-21-6",un:"2672",erg:"154",tox:null,cat:["tech","common"],water:false,gas:false,haz:"非公共危險物品(腐蝕·釋氨)",qty:null,
+ use:"半導體 SC-1(APM)清洗(氨水+雙氧水)、面板清洗、pH調整。",
+ phys:"無色液,強烈氨刺鼻味;不燃但釋出可燃/刺激性氨氣。",
+ hazard:"腐蝕刺激,釋氨氣灼傷眼/呼吸道;與次氯酸鹽混合放有毒氯胺。",
+ fire:"不燃;水霧驅散氨氣、冷卻容器;勿混漂白水。",
+ spill:"通風、上風、大量水稀釋、圍堵;防混含氯漂白劑。",
+ aid:"吸入移離給氧;眼/皮膚大量沖水≧15分;送醫。",
+ ppe:"防護面罩、護目鏡、耐鹼手套、必要時SCBA。"},
+
+{zh:"N-甲基-2-吡咯烷酮",en:"N-Methyl-2-pyrrolidone",alias:"NMP",cas:"872-50-4",un:"",erg:"",tox:null,cat:["tech"],water:false,gas:false,haz:"第四類-第三石油類(水溶性)",qty:"4,000 公升",
+ use:"光阻剝離液、清洗、鋰電池漿料溶劑。",
+ phys:"無色微黃液,微胺味;可燃(閃火點約86°C)。",
+ hazard:"可燃(較難點燃);<b>生殖毒性(致畸)</b>、刺激;經皮吸收。",
+ fire:"乾粉、CO₂、抗醇泡沫、水霧;冷卻容器。",
+ spill:"通風、吸收圍堵、防接觸(尤其孕婦)。",
+ aid:"接觸脫除污衣大量沖水;吸入移離給氧;送醫。",
+ ppe:"防滲手套(丁基)、護目鏡、防護衣。"},
+
+{zh:"丙二醇甲醚醋酸酯",en:"PGMEA",alias:"PGMEA 1-甲氧基-2-丙醇醋酸酯",cas:"108-65-6",un:"1993",erg:"129",tox:null,cat:["tech"],water:false,gas:false,haz:"第四類-第二石油類(非水溶性)",qty:"1,000 公升",
+ use:"半導體/面板<b>光阻溶劑、稀釋與清邊(EBR)</b>之主力溶劑。",
+ phys:"無色液,微醚酯味;可燃(閃火點約42-46°C)。",
+ hazard:"可燃、蒸氣可形成爆炸性混合;刺激。",
+ fire:"抗醇泡沫、乾粉、CO₂、水霧;冷卻容器。",
+ spill:"除引火源、通風、吸收圍堵。",
+ aid:"吸入移離給氧;接觸沖水;送醫。",
+ ppe:"防溶劑手套、護目鏡。"},
+
+{zh:"環己酮",en:"Cyclohexanone",alias:"CYC",cas:"108-94-1",un:"1915",erg:"127",tox:null,cat:["tech"],water:false,gas:false,haz:"第四類-第二石油類(非水溶性)",qty:"1,000 公升",
+ use:"光阻溶劑、清洗、尼龍原料。",
+ phys:"無色~淡黃液,薄荷/丙酮味;可燃(閃火點約44°C)。",
+ hazard:"可燃;刺激眼/呼吸道、麻醉。",
+ fire:"抗醇泡沫、乾粉、CO₂、水霧;冷卻容器。",
+ spill:"除引火源、通風、吸收圍堵。",
+ aid:"吸入移離給氧;接觸沖水;送醫。",
+ ppe:"防溶劑手套、護目鏡。"},
+
+{zh:"二甲基亞碸",en:"Dimethyl sulfoxide",alias:"DMSO",cas:"67-68-5",un:"",erg:"",tox:null,cat:["tech"],water:false,gas:false,haz:"第四類-第三石油類(水溶性)",qty:"4,000 公升",
+ use:"光阻剝離、清洗溶劑(常與其他配方)。",
+ phys:"無色黏液,微蒜味;可燃(閃火點約87°C)。",
+ hazard:"可燃;<b>極易穿透皮膚並攜帶溶質一同吸收</b>(防護重點);刺激。",
+ fire:"乾粉、CO₂、抗醇泡沫、水霧;冷卻容器;受熱分解放刺激性硫化物。",
+ spill:"通風、吸收圍堵、嚴防皮膚接觸(會帶入污染物)。",
+ aid:"接觸脫除污衣大量沖水;吸入移離;送醫。",
+ ppe:"防滲手套、護目鏡、防護衣。"},
+
+{zh:"六氟化硫",en:"Sulfur hexafluoride",alias:"SF6",cas:"2551-62-4",un:"1080",erg:"126",tox:null,cat:["tech"],water:false,gas:true,haz:"高壓氣體(窒息性·不燃)",qty:null,
+ use:"半導體/面板乾式蝕刻、電氣絕緣氣體。",
+ phys:"無色無味氣體,極重;不燃、本身低毒。",
+ hazard:"<b>窒息性</b>(排擠氧氣,沉積於低處/地下室);<b>遇電弧/高溫分解生劇毒S₂F₁₀、SOF₂、HF</b>。",
+ fire:"不燃;火場高溫使其分解放劇毒氟化物,須SCBA、上風、通風;水霧冷卻容器。",
+ spill:"通風(尤其低處)、防窒息;偵測氧濃度。",
+ aid:"窒息者移至新鮮空氣、給氧;接觸分解物比照HF;送醫。",
+ ppe:"SCBA(缺氧/分解物時)。"},
+
+{zh:"一氧化二氮 / 笑氣",en:"Nitrous oxide",alias:"N2O 笑氣",cas:"10024-97-2",un:"1070",erg:"122",tox:null,cat:["tech"],water:false,gas:true,haz:"氧化性(助燃)高壓氣體",qty:null,
+ use:"半導體 CVD(氧化矽/氮氧化矽)氧化源、醫療麻醉。",
+ phys:"無色氣體,微甜味;不燃但<b>強助燃(高溫分解放氧)</b>。",
+ hazard:"助燃使可燃物劇烈燃燒;高濃度致缺氧/麻醉;受熱容器爆炸。",
+ fire:"助燃;移除可燃物,大量水冷卻容器;遠距(可能爆裂)。",
+ spill:"通風、移除引火源/可燃物。",
+ aid:"吸入過量移離給氧;送醫。",
+ ppe:"SCBA(缺氧時)、護目鏡。"},
+
+{zh:"臭氧",en:"Ozone",alias:"O3",cas:"10028-15-6",un:"",erg:"",tox:null,cat:["tech"],water:false,gas:true,haz:"極強氧化性(現場產生·不運輸)",qty:null,
+ use:"半導體/面板晶圓清洗(臭氧水/UV)、ALD 氧化源;通常現場產生不儲存。",
+ phys:"淡藍氣體,特殊刺鼻味(影印機味);<b>極強氧化劑</b>、不穩定。",
+ hazard:"強氧化助燃;低濃度即強烈刺激致肺水腫;與可燃物/有機物反應。",
+ fire:"關閉產生機;移除可燃物、強制通風;以周邊適用滅火劑。",
+ spill:"關機、強制通風稀釋(臭氧會自行分解)、上風。",
+ aid:"吸入移離至新鮮空氣、給氧、半坐臥、送醫(肺水腫可延遲)。",
+ ppe:"SCBA、護目鏡。"},
+
+{zh:"液態氮",en:"Liquid nitrogen",alias:"LN2 液氮",cas:"7727-37-9",un:"1977",erg:"120",tox:null,cat:["tech","common"],water:false,gas:true,haz:"冷凍液化氣體(窒息性)",qty:null,
+ use:"半導體/實驗室冷卻、冷阱、冷凍保存、惰氣源。",
+ phys:"無色極低溫液(-196°C),無味;不燃、化學惰性。",
+ hazard:"<b>窒息(大量氣化排擠氧氣,1L液→約700L氣,密閉空間極危險)</b>;<b>極低溫凍傷</b>;密閉容器氣化爆裂。",
+ fire:"不燃;火場以水冷卻周邊容器防爆裂;注意缺氧。",
+ spill:"強制通風、撤離低窪/密閉處、偵測氧濃度、勿觸液體/結霜管。",
+ aid:"凍傷:勿摩擦,以體溫/溫水(約40°C)回溫、送醫;缺氧者移至新鮮空氣給氧。",
+ ppe:"低溫防護手套/面罩、氧濃度偵測器。"}
+);
+
+/* ---------- 可燃性高壓氣體（LPG・天然氣・烷類・烯類・乙炔・CO） ---------- */
+DATA.push(
+{zh:"液化石油氣",en:"Liquefied petroleum gas (LPG)",alias:"LPG 桶裝瓦斯 液化石油氣 丙烷+丁烷",cas:"68476-85-7",un:"1075",erg:"115",tox:null,cat:["common"],water:false,gas:true,haz:"可燃性高壓氣體",qty:"可燃性高壓氣體（非公共危險物品六類，無第四類管制量）；製造/儲存/處理場所依本辦法『可燃性高壓氣體』專章及高壓氣體法規列管",
+ use:"家用/營業瓦斯、工業燃料、切割。",
+ phys:"丙烷與丁烷混合,本身無味(加臭劑乙硫醇示警);無色氣體,<b>比空氣重,洩漏沉積低窪/地下室</b>;極易燃。",
+ hazard:"極易燃易爆;比空氣重沿地面流竄,於低處積聚遇火源爆燃;鋼瓶受熱有<b>沸騰液體膨脹蒸氣爆炸(BLEVE)</b>之虞;窒息。",
+ fire:"<b>關閉氣源/瓦斯閥優先</b>;<span class='forbid'>未止漏前勿撲滅火焰</span>(防氣體積聚復燃爆炸),改以大量水『冷卻鋼瓶』(尤其受火焰炙烤者,防BLEVE),待氣源耗盡。鋼瓶若變色/異響應立即大範圍撤離。",
+ spill:"消除一切引火源、強制通風(含低窪處)、上風、疏散;水霧驅散氣雲。",
+ aid:"吸入(窒息)移至新鮮空氣、給氧;凍傷(液體噴濺)以溫水回溫;送醫。",
+ ppe:"抗閃焰服 + SCBA(缺氧/濃煙)。"},
+
+{zh:"丙烷",en:"Propane",alias:"C3H8",cas:"74-98-6",un:"1978",erg:"115",tox:null,cat:["common"],water:false,gas:true,haz:"可燃性高壓氣體",qty:"可燃性高壓氣體（非公共危險物品六類，無第四類管制量；依高壓氣體專章管理）",
+ use:"LPG主成分、燃料、化工原料、冷媒(R290)。",
+ phys:"無色氣體,原無味(加臭);比空氣重沉低處;極易燃。",
+ hazard:"極易燃易爆;低處積聚回火;鋼瓶受熱BLEVE;窒息。",
+ fire:"關氣源優先;未止漏勿滅火焰,大量水冷卻鋼瓶;防BLEVE。",
+ spill:"除引火源、通風、上風、水霧驅散。",
+ aid:"窒息移離給氧;凍傷溫水回溫;送醫。",
+ ppe:"抗閃焰 + SCBA。"},
+
+{zh:"丁烷",en:"Butane",alias:"C4H10 正丁烷 卡式爐瓦斯",cas:"106-97-8",un:"1011",erg:"115",tox:null,cat:["common"],water:false,gas:true,haz:"可燃性高壓氣體",qty:"可燃性高壓氣體（非公共危險物品六類，無第四類管制量；依高壓氣體專章管理）",
+ use:"LPG成分、打火機/卡式爐燃料、噴霧推進劑。",
+ phys:"無色氣體,原無味(加臭);比空氣重沉低處;極易燃。",
+ hazard:"極易燃易爆;低處積聚回火;鋼瓶/卡式罐受熱爆炸;窒息。",
+ fire:"關氣源優先;未止漏勿滅火焰,大量水冷卻容器;防爆炸。",
+ spill:"除引火源、通風、上風、水霧驅散。",
+ aid:"窒息移離給氧;凍傷溫水回溫;送醫。",
+ ppe:"抗閃焰 + SCBA。"},
+
+{zh:"甲烷 / 天然氣",en:"Methane / Natural gas",alias:"CH4 天然氣 NG 沼氣 壓縮天然氣CNG",cas:"74-82-8",un:"1971",erg:"115",tox:null,cat:["common"],water:false,gas:true,haz:"可燃性高壓氣體",qty:"可燃性高壓氣體（非公共危險物品六類，無第四類管制量；依高壓氣體專章管理）",
+ use:"都市天然氣、發電/工業燃料、化工原料。",
+ phys:"無色氣體,原無味(加臭);<b>比空氣輕,洩漏向上積聚於頂部/天花板</b>;極易燃。",
+ hazard:"極易燃易爆;<b>積聚於上方死角</b>(與LPG相反);密閉空間爆燃;窒息。",
+ fire:"<b>關閉氣源/瓦斯總閥優先</b>;未止漏前勿滅火焰,大量水冷卻周邊;注意氣體往高處/上層擴散。",
+ spill:"除引火源、通風(尤其上方)、上風、疏散。",
+ aid:"窒息移至新鮮空氣、給氧;送醫。",
+ ppe:"抗閃焰 + SCBA(缺氧時)。"},
+
+{zh:"乙烷",en:"Ethane",alias:"C2H6",cas:"74-84-0",un:"1035",erg:"115",tox:null,cat:["common"],water:false,gas:true,haz:"可燃性高壓氣體",qty:"可燃性高壓氣體（非公共危險物品六類，無第四類管制量；依高壓氣體專章管理）",
+ use:"天然氣成分、乙烯原料、冷媒。",
+ phys:"無色無味氣體;略重於空氣;極易燃。",
+ hazard:"極易燃易爆;積聚回火;窒息。",
+ fire:"關氣源優先;未止漏勿滅火焰,大量水冷卻鋼瓶。",
+ spill:"除引火源、通風、上風。",
+ aid:"窒息移離給氧;送醫。",
+ ppe:"抗閃焰 + SCBA。"},
+
+{zh:"液化天然氣",en:"Liquefied natural gas (LNG)",alias:"LNG 液化天然氣",cas:"",un:"1972",erg:"115",tox:null,cat:["common"],water:false,gas:true,haz:"冷凍液化可燃性高壓氣體",qty:"可燃性高壓氣體（非公共危險物品六類，無第四類管制量；依高壓氣體專章管理）",
+ use:"天然氣低溫液態形式,儲運/接收站、發電。",
+ phys:"主成分甲烷,-162°C冷凍液;氣化後比空氣輕(初期冷蒸氣偏重貼地);極易燃。",
+ hazard:"極易燃;<b>極低溫凍傷</b>;1L液→約600L氣,大量氣化形成可燃蒸氣雲;窒息;接觸普通鋼材使其脆裂。",
+ fire:"關氣源/隔離洩漏源;未止漏勿滅火焰;大量水冷卻周邊容器(勿直射LNG液面以免劇烈氣化);防蒸氣雲復燃。",
+ spill:"大範圍疏散、除引火源、上風、強通風;勿以水直沖液體。",
+ aid:"凍傷勿摩擦、溫水(約40°C)回溫;窒息移離給氧;送醫。",
+ ppe:"低溫防護 + 抗閃焰 + SCBA。"},
+
+{zh:"乙烯",en:"Ethylene",alias:"C2H4 乙稀",cas:"74-85-1",un:"1962",erg:"116P",tox:null,cat:["common","tech"],water:false,gas:true,haz:"可燃性高壓氣體(可聚合)",qty:"可燃性高壓氣體（非公共危險物品六類，無第四類管制量；依高壓氣體專章管理）",
+ use:"石化龍頭原料(PE/EO等)、催熟、半導體部分製程。",
+ phys:"無色氣體,微甜味;略輕於空氣;極易燃、可聚合(P)。",
+ hazard:"極易燃易爆(範圍寬);受熱/壓可聚合放熱爆炸;窒息、麻醉。",
+ fire:"關氣源優先;未止漏勿滅火焰,大量水冷卻鋼瓶(防聚合/BLEVE)。",
+ spill:"除引火源、通風、上風、大範圍疏散。",
+ aid:"窒息移離給氧;凍傷溫水回溫;送醫。",
+ ppe:"抗閃焰 + SCBA。"},
+
+{zh:"丙烯",en:"Propylene",alias:"C3H6 丙稀 甲基乙烯",cas:"115-07-1",un:"1077",erg:"115",tox:null,cat:["common"],water:false,gas:true,haz:"可燃性高壓氣體",qty:"可燃性高壓氣體（非公共危險物品六類，無第四類管制量；依高壓氣體專章管理）",
+ use:"石化原料(PP/丙烯腈/環氧丙烷等)、燃料。",
+ phys:"無色氣體,微甜味;比空氣重沉低處;極易燃。",
+ hazard:"極易燃易爆;低處積聚回火;鋼瓶受熱BLEVE;窒息麻醉。",
+ fire:"關氣源優先;未止漏勿滅火焰,大量水冷卻鋼瓶。",
+ spill:"除引火源、通風、上風、疏散。",
+ aid:"窒息移離給氧;凍傷溫水回溫;送醫。",
+ ppe:"抗閃焰 + SCBA。"},
+
+{zh:"乙炔",en:"Acetylene",alias:"C2H2 電石氣 焊接氣",cas:"74-86-2",un:"1001",erg:"116",tox:null,cat:["common"],water:false,gas:true,haz:"可燃性高壓氣體(不穩定·可自分解爆炸)",qty:"可燃性高壓氣體（非公共危險物品六類，無第四類管制量；依高壓氣體專章管理）",
+ use:"氧乙炔焊接/切割、化工原料;由電石加水產生。",
+ phys:"無色氣體,純品微醚味(工業品含雜質有蒜臭);略輕於空氣;<b>極易燃、極寬爆炸範圍(2.5-100%)</b>。",
+ hazard:"<b>極危險</b>:爆炸範圍極寬;<b>受壓/受熱可不需空氣即自行分解爆炸</b>;與銅/銀/汞生成敏感性乙炔化物(會爆);鋼瓶含丙酮/多孔填料穩定。",
+ fire:"關氣源優先;<span class='forbid'>未止漏勿滅火焰</span>;大量水持續冷卻鋼瓶(受熱鋼瓶<b>即使移離火源仍可能內部分解續熱→爆炸</b>,需長時間冷卻或遠距撤離);<span class='forbid'>嚴禁用銅製器材接觸</span>。",
+ spill:"除一切引火源、強通風、上風、大範圍疏散。",
+ aid:"窒息移離給氧;送醫。",
+ ppe:"抗閃焰 + SCBA;非銅製工具。"},
+
+{zh:"一氧化碳",en:"Carbon monoxide",alias:"CO 一氧化碳",cas:"630-08-0",un:"1016",erg:"119",tox:null,cat:["common"],water:false,gas:true,haz:"毒性 + 可燃性高壓氣體",qty:"可燃性高壓氣體（非公共危險物品六類，無第四類管制量；依高壓氣體專章管理）",
+ use:"化工原料(光氣/甲醇/羰基合成)、冶金還原;<b>各類不完全燃燒/火場的主要致命氣體</b>。",
+ phys:"<b>無色無味無刺激</b>氣體(難以察覺,極危險);與空氣密度相近;易燃。",
+ hazard:"<b>劇毒</b>:與血紅素結合力為氧的200餘倍,阻斷供氧致缺氧、昏迷、死亡(火場/密閉燃燒首要殺手);易燃易爆。",
+ fire:"關氣源;未止漏勿滅火焰,大量水冷卻鋼瓶;<b>火場/密閉空間全程正壓SCBA</b>(CO無味無法察覺)。",
+ spill:"大範圍隔離、除引火源、強通風、上風;以CO偵測器確認濃度。",
+ aid:"<b>立即移至新鮮空氣、給100%高濃度氧</b>(嚴重者高壓氧治療),即使清醒也須送醫(可能延遲性神經損傷)。",
+ ppe:"正壓SCBA(CO偵測器必備)。"}
+);
+
+/* ---------- 高壓氣體勞工安全規則所列之毒性/可燃性氣體 + 工業惰性/助燃氣體 ---------- */
+DATA.push(
+{zh:"硫化氫",en:"Hydrogen sulfide",alias:"H2S 硫化氫 臭雞蛋氣",cas:"7783-06-4",un:"1053",erg:"117",tox:null,cat:["common"],water:false,gas:true,haz:"毒性 + 可燃性高壓氣體",qty:"高壓氣體勞工安全規則：可燃性氣體＋毒性氣體（容許濃度低，劇毒）",
+ use:"石化/煉油、汙水/化糞池/下水道、溫泉、紙漿;化工。",
+ phys:"無色氣體,低濃度臭雞蛋味,<b>高濃度反而麻痺嗅覺使人失去警覺</b>;比空氣重沉低處;劇毒易燃。",
+ hazard:"<b>極劇毒</b>:高濃度數次呼吸即昏倒猝死(類似氰化物阻斷細胞呼吸);<b>嗅覺麻痺極危險</b>;易燃易爆;比空氣重積聚低窪/坑道(密閉空間頭號殺手)。",
+ fire:"關氣源優先;未止漏勿滅火焰,大量水冷卻容器;燃燒生有毒SO₂;全程SCBA、上風。",
+ spill:"大範圍隔離、低處/坑道嚴禁進入、上風、強通風;水霧驅散。",
+ aid:"<b>救助者務必先確保自身SCBA(勿貿然進入致連環倒下)</b>;患者立即移至新鮮空氣、給100%氧、必要時CPR、送醫。",
+ ppe:"正壓SCBA + 防護(H2S偵測器必備)。"},
+
+{zh:"光氣 / 碳醯氯",en:"Phosgene",alias:"COCl2 碳醯氯 二氯化羰",cas:"75-44-5",un:"1076",erg:"125",tox:null,cat:["common"],water:false,gas:true,haz:"毒性高壓氣體(劇毒·不燃)",qty:"高壓氣體勞工安全規則：毒性氣體（容許濃度極低 0.1ppm，劇毒）",
+ use:"異氰酸酯/PC/農藥化工原料;<b>含氯有機物(如二氯甲烷/氟氯烷/PVC)火場高溫燃燒之分解產物</b>。",
+ phys:"無色氣體,低濃度有<b>新割乾草/腐草味</b>;比空氣重沉低處;不燃。",
+ hazard:"<b>極劇毒窒息性</b>:刺激不明顯卻深入肺部,<b>暴露後常延遲數小時才發作致命肺水腫</b>;歷史化學戰劑。",
+ fire:"本身不燃;火場由含氯物分解產生,須<b>全程正壓SCBA、上風</b>;水霧驅散、冷卻容器。",
+ spill:"大範圍隔離、上風、低處警戒;以氨水/鹼噴霧中和驅散。",
+ aid:"<b>即使無症狀也須立即脫離、絕對靜臥休息並送醫觀察≧24-48h</b>(肺水腫延遲發作);給氧;勿讓患者活動。",
+ ppe:"正壓SCBA + 全身防護。"},
+
+{zh:"氧氣 / 液氧",en:"Oxygen",alias:"O2 液氧 LOX",cas:"7782-44-7",un:"1072",erg:"122",tox:null,cat:["common","tech"],water:false,gas:true,haz:"助燃性高壓氣體（液氧為冷凍液化氣體）",qty:"高壓氣體勞工安全規則：氧氣（助燃氣體）；液氧為冷凍液化氣體",
+ use:"醫療、焊接/切割、煉鋼、半導體氧化製程、汙水曝氣。",
+ phys:"無色無味氣體(液氧為淡藍液,-183°C);不燃但<b>強助燃</b>。",
+ hazard:"<b>強助燃</b>:富氧環境使可燃物劇烈燃燒、衣物頭髮易燃;油脂遇高壓氧可爆炸;液氧凍傷、使瀝青/有機物成爆炸性混合。",
+ fire:"本身不燃;<b>關氣源、移除可燃物</b>,大量水冷卻容器;富氧區域嚴禁油脂火花。",
+ spill:"關閥、強通風降低氧濃度、移除可燃物與引火源;液氧區禁踩踏(凍傷/材料脆化)。",
+ aid:"液氧凍傷以溫水回溫、勿摩擦;送醫。",
+ ppe:"無油污防護;液氧另需低溫防護;禁油脂。"},
+
+{zh:"二氧化碳 / 乾冰",en:"Carbon dioxide",alias:"CO2 乾冰 液態二氧化碳",cas:"124-38-9",un:"1013",erg:"120",tox:null,cat:["common","tech"],water:false,gas:true,haz:"窒息性高壓氣體（乾冰為固態、液態CO₂為冷凍液化）",qty:"高壓氣體勞工安全規則：惰性(窒息性)氣體；亦為滅火劑",
+ use:"滅火劑、惰性保護氣、碳酸飲料、乾冰冷藏、超臨界清洗。",
+ phys:"無色無味氣體;比空氣重沉低處;乾冰為-78°C固體升華;不燃。",
+ hazard:"<b>窒息</b>(排擠氧氣,高濃度致快速昏迷死亡,沉積低窪/冷藏庫/船艙);乾冰凍傷;密閉容器升華增壓爆裂。",
+ fire:"不燃(本身為滅火劑);火場以水冷卻受熱鋼瓶/乾冰桶(防爆裂)。",
+ spill:"強制通風(尤其低處)、撤離、偵測氧濃度;乾冰勿密閉存放。",
+ aid:"窒息者移至新鮮空氣、給氧、必要時CPR;乾冰凍傷溫水回溫;送醫。",
+ ppe:"氧濃度偵測;缺氧時SCBA;乾冰防凍手套。"},
+
+{zh:"氬氣 / 液氬",en:"Argon",alias:"Ar 液氬",cas:"7440-37-1",un:"1006",erg:"121",tox:null,cat:["common","tech"],water:false,gas:true,haz:"窒息性惰性高壓氣體（液氬為冷凍液化氣體）",qty:"高壓氣體勞工安全規則：惰性(窒息性)氣體",
+ use:"焊接保護氣、半導體/面板濺鍍與惰性氣氛、燈泡填充、煉鋼。",
+ phys:"無色無味氣體;<b>比空氣重沉低處</b>;化學惰性、不燃。",
+ hazard:"<b>窒息</b>(無味無法察覺,排擠氧氣,積聚低窪/坑道/反應槽,密閉空間極危險);液氬凍傷。",
+ fire:"不燃;火場以水冷卻受熱容器(防爆裂);注意缺氧。",
+ spill:"強制通風(尤其低處)、撤離、偵測氧濃度。",
+ aid:"窒息者移至新鮮空氣、給氧、必要時CPR;液氬凍傷溫水回溫;送醫。",
+ ppe:"氧濃度偵測;缺氧時SCBA。"},
+
+{zh:"氦氣",en:"Helium",alias:"He 液氦",cas:"7440-59-7",un:"1046",erg:"121",tox:null,cat:["common","tech"],water:false,gas:true,haz:"窒息性惰性高壓氣體（液氦為冷凍液化氣體）",qty:"高壓氣體勞工安全規則：惰性(窒息性)氣體",
+ use:"半導體/光纖載氣與冷卻、檢漏、MRI超導冷卻(液氦)、氣球。",
+ phys:"無色無味極輕氣體;<b>比空氣輕積聚上方</b>;化學惰性、不燃。",
+ hazard:"<b>窒息</b>(排擠氧氣,積聚密閉空間上方);液氦極低溫(-269°C)嚴重凍傷、材料脆化。",
+ fire:"不燃;火場以水冷卻受熱容器(防爆裂)。",
+ spill:"強制通風(尤其上方)、撤離、偵測氧濃度。",
+ aid:"窒息者移至新鮮空氣、給氧;液氦凍傷溫水回溫;送醫。",
+ ppe:"氧濃度偵測;缺氧時SCBA;低溫防護。"},
+
+{zh:"氯甲烷",en:"Methyl chloride",alias:"CH3Cl 一氯甲烷",cas:"74-87-3",un:"1063",erg:"115",tox:null,cat:["common"],water:false,gas:true,haz:"毒性 + 可燃性高壓氣體",qty:"高壓氣體勞工安全規則：可燃性氣體",
+ use:"矽利光/化工原料(甲基化劑)、冷媒、發泡。",
+ phys:"無色氣體,微甜醚味(警示性差);比空氣重;易燃、有毒。",
+ hazard:"易燃易爆;有毒(中樞神經抑制、麻醉,延遲性);受熱分解放光氣/HCl。",
+ fire:"關氣源;未止漏勿滅火焰,大量水冷卻鋼瓶;SCBA(分解毒氣)。",
+ spill:"除引火源、上風、低處警戒、通風。",
+ aid:"吸入移離給氧、送醫(注意延遲性神經症狀)。",
+ ppe:"SCBA + 防護。"},
+
+{zh:"氯乙烷",en:"Ethyl chloride",alias:"C2H5Cl 一氯乙烷",cas:"75-00-3",un:"1037",erg:"115",tox:null,cat:["common"],water:false,gas:true,haz:"可燃性高壓氣體",qty:"高壓氣體勞工安全規則：可燃性氣體",
+ use:"乙基化化工原料、局部麻醉噴劑、冷媒。",
+ phys:"無色氣/易揮發液,微醚味;易燃。",
+ hazard:"易燃易爆;麻醉、刺激;受熱分解放HCl/光氣。",
+ fire:"關氣源;未止漏勿滅火焰,大量水冷卻容器;SCBA。",
+ spill:"除引火源、通風、上風。",
+ aid:"吸入移離給氧;凍傷溫水回溫;送醫。",
+ ppe:"抗閃焰 + SCBA。"},
+
+{zh:"溴甲烷",en:"Methyl bromide",alias:"CH3Br 溴化甲烷",cas:"74-83-9",un:"1062",erg:"123",tox:null,cat:["common"],water:false,gas:true,haz:"毒性高壓氣體(燻蒸劑·難燃)",qty:"高壓氣體勞工安全規則：毒性氣體（兼列可燃性）",
+ use:"檢疫/土壤燻蒸劑(逐步淘汰)、化工甲基化。",
+ phys:"無色氣體,高濃度微甜氯仿味(警示性差);難燃但高濃度可燃;比空氣重。",
+ hazard:"<b>劇毒</b>:神經毒、延遲性致命肺水腫與抽搐(暴露後可延遲數小時);破壞臭氧層。",
+ fire:"難燃;周邊火以水霧/乾粉、冷卻容器;SCBA、上風(燃燒/分解放有毒物)。",
+ spill:"大範圍隔離、上風、低處警戒、通風。",
+ aid:"吸入移離給氧、靜臥送醫觀察(延遲發作);接觸沖水。",
+ ppe:"正壓SCBA + 防護(活性碳吸附對其防護不足)。"},
+
+{zh:"二甲醚",en:"Dimethyl ether",alias:"DME 甲醚",cas:"115-10-6",un:"1033",erg:"115",tox:null,cat:["common","tech"],water:false,gas:true,haz:"可燃性高壓氣體",qty:"高壓氣體勞工安全規則：可燃性氣體",
+ use:"噴霧推進劑、燃料(LPG替代/摻配)、冷媒、化工。",
+ phys:"無色氣體,微醚味;比空氣重;極易燃。",
+ hazard:"極易燃易爆;低處積聚回火;高濃度麻醉、窒息。",
+ fire:"關氣源;未止漏勿滅火焰,大量水冷卻鋼瓶。",
+ spill:"除引火源、通風、上風。",
+ aid:"吸入移離給氧;凍傷溫水回溫;送醫。",
+ ppe:"抗閃焰 + SCBA。"},
+
+{zh:"甲胺",en:"Methylamine",alias:"一甲胺 CH3NH2",cas:"74-89-5",un:"1061",erg:"118",tox:null,cat:["common"],water:false,gas:true,haz:"毒性 + 可燃性高壓氣體(腐蝕)",qty:"高壓氣體勞工安全規則：可燃性氣體＋毒性氣體",
+ use:"農藥/醫藥/界面活性劑化工原料、製革。",
+ phys:"無色氣體,強烈魚腥/氨味;易燃、腐蝕。",
+ hazard:"易燃;強刺激腐蝕灼傷眼/呼吸道、肺水腫;有毒。",
+ fire:"關氣源;未止漏勿滅火焰,水霧驅散氣雲並冷卻容器。",
+ spill:"上風、水霧壓制、通風、除引火源。",
+ aid:"吸入移離給氧;眼/皮膚大量沖水≧15分;送醫。",
+ ppe:"抗閃焰 + SCBA、防化手套。"},
+
+{zh:"二甲胺",en:"Dimethylamine",alias:"DMA (CH3)2NH",cas:"124-40-3",un:"1032",erg:"118",tox:null,cat:["common"],water:false,gas:true,haz:"毒性 + 可燃性高壓氣體(腐蝕)",qty:"高壓氣體勞工安全規則：可燃性氣體＋毒性氣體",
+ use:"橡膠促進劑/農藥/醫藥/界面活性劑原料。",
+ phys:"無色氣體,強烈魚腥/氨味;易燃、腐蝕。",
+ hazard:"易燃;強刺激腐蝕、肺水腫;有毒。",
+ fire:"關氣源;未止漏勿滅火焰,水霧驅散並冷卻容器。",
+ spill:"上風、水霧壓制、通風、除引火源。",
+ aid:"吸入移離給氧;眼/皮膚大量沖水;送醫。",
+ ppe:"抗閃焰 + SCBA、防化手套。"},
+
+{zh:"三甲胺",en:"Trimethylamine",alias:"TMA (CH3)3N",cas:"75-50-3",un:"1083",erg:"118",tox:null,cat:["common"],water:false,gas:true,haz:"毒性 + 可燃性高壓氣體(腐蝕)",qty:"高壓氣體勞工安全規則：可燃性氣體＋毒性氣體",
+ use:"四級銨/膽鹼/化工原料。",
+ phys:"無色氣體,強烈魚腥/氨味;易燃、腐蝕。",
+ hazard:"易燃;強刺激腐蝕、肺水腫;有毒。",
+ fire:"關氣源;未止漏勿滅火焰,水霧驅散並冷卻容器。",
+ spill:"上風、水霧壓制、通風、除引火源。",
+ aid:"吸入移離給氧;眼/皮膚大量沖水;送醫。",
+ ppe:"抗閃焰 + SCBA、防化手套。"},
+
+{zh:"乙胺",en:"Ethylamine",alias:"一乙胺 C2H5NH2",cas:"75-04-7",un:"1036",erg:"118",tox:null,cat:["common"],water:false,gas:true,haz:"可燃性高壓氣體(腐蝕刺激)",qty:"高壓氣體勞工安全規則：可燃性氣體",
+ use:"農藥/染料/醫藥化工原料。",
+ phys:"無色氣/易揮發液,強烈氨味;易燃、腐蝕。",
+ hazard:"易燃;強刺激腐蝕眼/呼吸道、肺水腫。",
+ fire:"關氣源;未止漏勿滅火焰,水霧驅散並冷卻容器。",
+ spill:"上風、水霧壓制、通風、除引火源。",
+ aid:"吸入移離給氧;眼/皮膚大量沖水;送醫。",
+ ppe:"抗閃焰 + SCBA、防化手套。"},
+
+{zh:"二乙胺",en:"Diethylamine",alias:"DEA (C2H5)2NH",cas:"109-89-7",un:"1154",erg:"132",tox:null,cat:["common"],water:false,gas:false,haz:"第四類 易燃液體－第一石油類（水溶性，與水互溶）",qty:"400 公升（第一石油類·水溶性）",
+ use:"橡膠/醫藥/農藥/腐蝕抑制劑化工原料。",
+ phys:"無色易揮發液,強烈氨/魚腥味;易燃(閃火點約-23°C)、腐蝕。",
+ hazard:"高度易燃;強刺激腐蝕、肺水腫;有毒。",
+ fire:"抗醇泡沫、乾粉、CO₂;水霧冷卻容器、驅散蒸氣。",
+ spill:"除引火源、上風、通風、吸收圍堵。",
+ aid:"吸入移離給氧;眼/皮膚大量沖水;送醫。",
+ ppe:"抗閃焰 + SCBA、防化手套。"},
+
+{zh:"丙烯醛",en:"Acrolein",alias:"丙烯醛 2-丙烯醛",cas:"107-02-8",un:"1092",erg:"131P",tox:null,cat:["common"],water:false,gas:false,haz:"第四類-第一石油類(非水溶性)/毒性氣體列舉",qty:"200 公升（第一石油類非水溶性）※高壓氣體規則列毒性/可燃性",
+ use:"丙烯酸/甲硫胺酸/化工原料、生物殺滅劑。",
+ phys:"無色~淡黃易揮發液,強烈刺鼻焦味;高度易燃、可聚合(P)。",
+ hazard:"<b>劇毒</b>強催淚刺激致肺水腫;高度易燃;受熱/光聚合爆炸。",
+ fire:"抗醇泡沫、乾粉、CO₂;水霧冷卻容器(防聚合);全程SCBA、上風。",
+ spill:"大範圍隔離、除引火源、上風、吸收圍堵。",
+ aid:"吸入移離給氧、靜臥送醫(肺水腫延遲);眼/皮膚大量沖水。",
+ ppe:"正壓SCBA + 防化。"},
+
+{zh:"氯丁二烯",en:"Chloroprene",alias:"2-氯-1,3-丁二烯",cas:"126-99-8",un:"1991",erg:"131P",tox:null,cat:["common"],water:false,gas:false,haz:"第四類-第一石油類(非水溶性)/毒性氣體列舉",qty:"200 公升（第一石油類非水溶性）※高壓氣體規則列毒性氣體",
+ use:"氯丁橡膠(Neoprene)單體。",
+ phys:"無色易揮發液,刺激味;高度易燃、可聚合(P)。",
+ hazard:"高度易燃;有毒(肝/肺/疑似致癌)刺激;聚合放熱爆炸。",
+ fire:"抗醇泡沫、乾粉、CO₂;水霧冷卻容器(防聚合);SCBA。",
+ spill:"除引火源、上風、通風、吸收圍堵。",
+ aid:"吸入移離給氧、送醫;接觸沖水。",
+ ppe:"SCBA + 防化。"},
+
+{zh:"環丙烷",en:"Cyclopropane",alias:"C3H6 環丙烷",cas:"75-19-4",un:"1027",erg:"115",tox:null,cat:["common"],water:false,gas:true,haz:"可燃性高壓氣體",qty:"高壓氣體勞工安全規則：可燃性氣體",
+ use:"化工原料、早期吸入麻醉劑。",
+ phys:"無色氣體,微石油味;極易燃;略重於空氣。",
+ hazard:"極易燃易爆;麻醉、窒息。",
+ fire:"關氣源;未止漏勿滅火焰,大量水冷卻鋼瓶。",
+ spill:"除引火源、通風、上風。",
+ aid:"吸入移離給氧;送醫。",
+ ppe:"抗閃焰 + SCBA。"},
+
+{zh:"丁烯",en:"Butylene / Butene",alias:"C4H8 丁烯",cas:"25167-67-3",un:"1012",erg:"115",tox:null,cat:["common"],water:false,gas:true,haz:"可燃性高壓氣體",qty:"高壓氣體勞工安全規則：可燃性氣體",
+ use:"石化原料(合成橡膠/聚丁烯/燃料)。",
+ phys:"無色氣體,微石油味;比空氣重;極易燃。",
+ hazard:"極易燃易爆;低處積聚回火;窒息麻醉。",
+ fire:"關氣源;未止漏勿滅火焰,大量水冷卻鋼瓶。",
+ spill:"除引火源、通風、上風。",
+ aid:"吸入移離給氧;凍傷溫水回溫;送醫。",
+ ppe:"抗閃焰 + SCBA。"},
+
+{zh:"乙苯",en:"Ethylbenzene",alias:"乙基苯 EB",cas:"100-41-4",un:"1175",erg:"130",tox:null,cat:["common"],water:false,gas:false,haz:"第四類-第一石油類(非水溶性)",qty:"200 公升（第一石油類非水溶性）",
+ use:"苯乙烯原料、溶劑;汽油成分。",
+ phys:"無色芳香液;高度易燃(閃火點約15°C)。",
+ hazard:"高度易燃、蒸氣回火;刺激、麻醉、疑似致癌。",
+ fire:"泡沫、乾粉、CO₂;水霧冷卻容器,水柱效果差。",
+ spill:"除引火源、通風、吸收圍堵、防入下水道。",
+ aid:"吸入移離給氧;接觸沖水;送醫。",
+ ppe:"防溶劑手套、護目鏡、抗閃焰。"}
+);
+
+/* ===================== 官方完整列管毒化物清單 =====================
+   來源：環境部化學物質管理署 開放資料 TOXIC_P_23
+        「公告毒性化學物質及其毒性分類」
+   下載/整理日期：2026-06-21
+   欄位：id列管編號 zh中文 en英文 formula分子式 cas
+        conc管制濃度(%) altq大量運作量基準 tox毒性分類[1-4] date公告日期 url官方詳細頁
+   ※ 此清單可用上方「🔄 更新官方清單」按鈕匯入環境部最新 JSON 覆蓋。
+==================================================================== */
+const OFFICIAL = [{"id":"195-01","zh":"大克蟎","en":"Dicofol","formula":"C14H9Cl5O","cas":"115-32-2,10606-46-9","conc":"1","altq":"50","tox":[1,3],"date":"2020.09.08","url":"https://toxicdms.moenv.gov.tw/Chm/Detail1/195-01"},{"id":"194-01","zh":"短鏈氯化石蠟","en":"Short-chain chlorinated paraffins (SCCPs)","formula":"CxH(2x-y+2)Cly，x=10-13 y=1-13","cas":"85535-84-8","conc":"1","altq":"100","tox":[1],"date":"2019.03.05","url":"https://toxicdms.moenv.gov.tw/Chm/Detail1/194-01"},{"id":"193-01","zh":"橘色2號","en":"Orange2","formula":"C16H11N2NaO4S","cas":"633-96-5","conc":"1","altq":"","tox":[4],"date":"2018.06.28","url":"https://toxicdms.moenv.gov.tw/Chm/Detail1/193-01"},{"id":"192-01","zh":"氮紅","en":"Azorubine","formula":"C20H12N2Na2O7S2","cas":"3567-69-9","conc":"1","altq":"","tox":[4],"date":"2018.06.28","url":"https://toxicdms.moenv.gov.tw/Chm/Detail1/192-01"},{"id":"191-01","zh":"紅色2號","en":"Red No.2","formula":"C20H11N2Na3O10S3","cas":"915-67-3","conc":"1","altq":"","tox":[4],"date":"2018.06.28","url":"https://toxicdms.moenv.gov.tw/Chm/Detail1/191-01"},{"id":"190-01","zh":"鹽基性芥黃","en":"Auramine","formula":"C17H22ClN3","cas":"2465-27-2","conc":"1","altq":"","tox":[4],"date":"2018.06.28","url":"https://toxicdms.moenv.gov.tw/Chm/Detail1/190-01"},{"id":"189-01","zh":"王金黃(塊黃)","en":"Basic orange 2","formula":"C12H13ClN4","cas":"532-82-1","conc":"1","altq":"","tox":[4],"date":"2018.06.28","url":"https://toxicdms.moenv.gov.tw/Chm/Detail1/189-01"},{"id":"188-01","zh":"二乙基黃","en":"Diethyl yellow/Solvent yellow 56","formula":"C16H19N3","cas":"2481-94-9","conc":"1","altq":"","tox":[4],"date":"2018.06.28","url":"https://toxicdms.moenv.gov.tw/Chm/Detail1/188-01"},{"id":"187-08","zh":"蘇丹紅7B","en":"Sudan Red 7B","formula":"C24H21N5","cas":"6368-72-5","conc":"1","altq":"","tox":[4],"date":"2018.06.28","url":"https://toxicdms.moenv.gov.tw/Chm/Detail1/187-08"},{"id":"187-07","zh":"蘇丹黑B","en":"Sudan Black B","formula":"C29H24N6","cas":"4197-25-5","conc":"1","altq":"","tox":[4],"date":"2018.06.28","url":"https://toxicdms.moenv.gov.tw/Chm/Detail1/187-07"},{"id":"187-06","zh":"蘇丹橙G","en":"Sudan Orange G","formula":"C12H10N2O2","cas":"2051-85-6","conc":"1","altq":"","tox":[4],"date":"2018.06.28","url":"https://toxicdms.moenv.gov.tw/Chm/Detail1/187-06"},{"id":"187-05","zh":"蘇丹紅G","en":"Sudan Red G","formula":"C17H14N2O2","cas":"1229-55-6","conc":"1","altq":"","tox":[4],"date":"2018.06.28","url":"https://toxicdms.moenv.gov.tw/Chm/Detail1/187-05"},{"id":"187-04","zh":"蘇丹4號","en":"Sudan 4","formula":"C24H20N4O","cas":"85-83-6","conc":"1","altq":"","tox":[4],"date":"2018.06.28","url":"https://toxicdms.moenv.gov.tw/Chm/Detail1/187-04"},{"id":"187-03","zh":"蘇丹3號","en":"Sudan 3","formula":"C22H16N4O","cas":"85-86-9","conc":"1","altq":"","tox":[4],"date":"2018.06.28","url":"https://toxicdms.moenv.gov.tw/Chm/Detail1/187-03"},{"id":"187-02","zh":"蘇丹2號","en":"Sudan 2","formula":"C18H16N2O","cas":"3118-97-6","conc":"1","altq":"","tox":[4],"date":"2018.06.28","url":"https://toxicdms.moenv.gov.tw/Chm/Detail1/187-02"},{"id":"187-01","zh":"蘇丹1號","en":"Sudan 1","formula":"C16H12N2O","cas":"842-07-9","conc":"1","altq":"","tox":[4],"date":"2018.06.28","url":"https://toxicdms.moenv.gov.tw/Chm/Detail1/187-01"},{"id":"186-01","zh":"α-苯並吡喃酮（香豆素）","en":"Coumarin","formula":"C9H6O2","cas":"91-64-5","conc":"1","altq":"","tox":[4],"date":"2018.01.01","url":"https://toxicdms.moenv.gov.tw/Chm/Detail1/186-01"},{"id":"185-01","zh":"三聚氰胺","en":"Melamine","formula":"C3H6N6","cas":"108-78-1","conc":"1","altq":"","tox":[4],"date":"2018.01.01","url":"https://toxicdms.moenv.gov.tw/Chm/Detail1/185-01"},{"id":"184-01","zh":"甲醛次硫酸氫鈉（吊白塊）","en":"Sodium hydroxymethanesulfinate","formula":"CH7NaO5S","cas":"6035-47-8,149-44-0","conc":"1","altq":"","tox":[4],"date":"2018.01.01","url":"https://toxicdms.moenv.gov.tw/Chm/Detail1/184-01"},{"id":"183-01","zh":"二甲基黃","en":"Butter yellow","formula":"C14H15N3","cas":"60-11-7","conc":"1","altq":"","tox":[4],"date":"2018.01.01","url":"https://toxicdms.moenv.gov.tw/Chm/Detail1/183-01"},{"id":"182-01","zh":"玫瑰紅B","en":"Rhodamine B","formula":"C28H31ClN2O3","cas":"81-88-9","conc":"1","altq":"","tox":[4],"date":"2018.01.01","url":"https://toxicdms.moenv.gov.tw/Chm/Detail1/182-01"},{"id":"181-01","zh":"皂黃","en":"Metanil yellow","formula":"C18H14N3NaO3S","cas":"587-98-4","conc":"1","altq":"","tox":[4],"date":"2018.01.01","url":"https://toxicdms.moenv.gov.tw/Chm/Detail1/181-01"},{"id":"180-01","zh":"芐基紫","en":"Benzyl violet 4B","formula":"C39H40N3NaO6S2","cas":"1694-09-3","conc":"1","altq":"","tox":[4],"date":"2018.01.01","url":"https://toxicdms.moenv.gov.tw/Chm/Detail1/180-01"},{"id":"179-01","zh":"富馬酸二甲酯","en":"Dimethyl fumarate (DMF)","formula":"C6H8O4","cas":"624-49-7","conc":"1","altq":"","tox":[4],"date":"2018.01.01","url":"https://toxicdms.moenv.gov.tw/Chm/Detail1/179-01"},{"id":"178-01","zh":"溴酸鉀","en":"Potassium bromate","formula":"KBrO3","cas":"7758-01-2","conc":"1","altq":"","tox":[4],"date":"2018.01.01","url":"https://toxicdms.moenv.gov.tw/Chm/Detail1/178-01"},{"id":"177-01","zh":"對位乙氧基苯脲","en":"(4-Ethoxyphenyl)urea、 Dulcin","formula":"C9H12N2O2","cas":"150-69-6","conc":"1","altq":"","tox":[4],"date":"2018.01.01","url":"https://toxicdms.moenv.gov.tw/Chm/Detail1/177-01"},{"id":"176-02","zh":"順丁烯二酸酐","en":"Maleic anhydride","formula":"C4H2O3","cas":"108-31-6","conc":"1","altq":"","tox":[4],"date":"2018.01.01","url":"https://toxicdms.moenv.gov.tw/Chm/Detail1/176-02"},{"id":"176-01","zh":"順丁烯二酸（馬來酸）","en":"Maleic acid","formula":"C4H4O4","cas":"110-16-7","conc":"1","altq":"","tox":[4],"date":"2018.01.01","url":"https://toxicdms.moenv.gov.tw/Chm/Detail1/176-01"},{"id":"175-01","zh":"孔雀綠","en":"Malachite green","formula":"C23H25ClN2","cas":"569-64-2","conc":"1","altq":"","tox":[4],"date":"2018.01.01","url":"https://toxicdms.moenv.gov.tw/Chm/Detail1/175-01"},{"id":"174-04","zh":"γ-六溴環十二烷","en":"gamma-hexabromocyclododecane","formula":"C12H18Br6","cas":"134237-52-8","conc":"1","altq":"50","tox":[1],"date":"2014.08.25","url":"https://toxicdms.moenv.gov.tw/Chm/Detail1/174-04"},{"id":"174-03","zh":"β-六溴環十二烷","en":"beta-hexabromocyclododecane","formula":"C12H18Br6","cas":"134237-51-7","conc":"1","altq":"50","tox":[1],"date":"2014.08.25","url":"https://toxicdms.moenv.gov.tw/Chm/Detail1/174-03"},{"id":"174-02","zh":"α-六溴環十二烷","en":"alpha-hexabromocyclododecane","formula":"C12H18Br6","cas":"134237-50-6","conc":"1","altq":"50","tox":[1],"date":"2014.08.25","url":"https://toxicdms.moenv.gov.tw/Chm/Detail1/174-02"},{"id":"174-01","zh":"六溴環十二烷","en":"Hexabromocyclododecane(HBCD)1,2,5,6,9,10-hexabromocyclododecane","formula":"C12H18Br6","cas":"3194-55-6,25637-99-4","conc":"1","altq":"50","tox":[1],"date":"2014.08.25","url":"https://toxicdms.moenv.gov.tw/Chm/Detail1/174-01"},{"id":"173-01","zh":"三2-(氯乙基)磷酸酯","en":"Tris(2-chloroethyl) phosphate(TCEP)","formula":"C6H12Cl3O4P","cas":"115-96-8","conc":"1","altq":"50","tox":[2],"date":"2013.01.24","url":"https://toxicdms.moenv.gov.tw/Chm/Detail1/173-01"},{"id":"172-04","zh":"安殺番硫酸鹽","en":"Endosulfan sulfate","formula":"C9H6Cl6O4S","cas":"1031-07-8","conc":"1","altq":"50","tox":[1,3],"date":"2011.07.20","url":"https://toxicdms.moenv.gov.tw/Chm/Detail1/172-04"},{"id":"172-03","zh":"β-安殺番","en":"Beta (β) endosulfan","formula":"C9H6Cl6O3S","cas":"33213-65-9","conc":"1","altq":"50","tox":[1,3],"date":"2011.07.20","url":"https://toxicdms.moenv.gov.tw/Chm/Detail1/172-03"},{"id":"172-02","zh":"α-安殺番","en":"Alpha (α) endosulfan","formula":"C9H6Cl6O3S","cas":"959-98-8","conc":"1","altq":"50","tox":[1,3],"date":"2011.07.20","url":"https://toxicdms.moenv.gov.tw/Chm/Detail1/172-02"},{"id":"172-01","zh":"安殺番(工業級安殺番)","en":"Endosulfan (Technical endosulfan)","formula":"C9H6Cl6O3S","cas":"115-29-7","conc":"1","altq":"50","tox":[1,3],"date":"2011.07.20","url":"https://toxicdms.moenv.gov.tw/Chm/Detail1/172-01"},{"id":"171-01","zh":"六溴聯苯","en":"Hexabromobiphenyl","formula":"C12H4Br6","cas":"36355-01-8","conc":"1","altq":"50","tox":[1],"date":"2010.12.24","url":"https://toxicdms.moenv.gov.tw/Chm/Detail1/171-01"},{"id":"170-01","zh":"五氯苯","en":"Pentachlorobenzene","formula":"C6HCl5","cas":"608-93-5","conc":"1","altq":"50","tox":[1,3],"date":"2010.12.24","url":"https://toxicdms.moenv.gov.tw/Chm/Detail1/170-01"},{"id":"169-05","zh":"全氟己烷磺酸及其鹽類與相關化合物","en":"Perfluorohexanesulfonic acid(PFHxS),its salts and PFHxS related compounds","formula":"-","cas":"355-46-4,111393-39-6,1270179-82-2,1270179-93-5,127133-66-8,129813-71-4,141607-32-1,1427176-17-7,1427176-20-2,147029-28-5,148240-80-6,148684-79-1,149652-30-2,160305-97-5,160336-17-4,160901-25-7,160901-26-8,161074-58-4,1645842-67-6,1645850-46-9,1645852-09-0,1645852-10-3,1648534-82-0,1648539-69-8,1648540-20-8,171561-95-8,178094-71-8,178535-22-3,179005-06-2,179005-07-3,1893-52-3,192662-29-6,222716-67-8,254889-10-6,30295-56-8,306973-47-7,306974-19-6,306974-28-7,306974-45-8,306974-63-0,306975-62-2,306975-84-8,306975-85-9,306976-25-0,306976-55-6,306977-10-6,306977-58-2,306978-04-1,306978-65-4,306979-40-8,306980-27-8,34455-03-3,3871-99-6,38850-52-1,38850-58-7,38850-60-1,41997-13-1,423-50-7,504396-13-8,50598-28-2,507225-08-3,52166-82-2,55120-77-9,55591-23-6,56372-23-7,67584-48-9,67584-53-6,67584-57-0,67584-61-6,67906-70-1,67906-71-2,67939-61-1,67939-92-8,67969-65-7,680187-85-3,680187-86-4,68081-83-4,68227-87-2,68227-94-1,68227-96-3,68227-98-5,68228-00-2,68239-74-7,68259-08-5,68259-15-4,68259-38-1,68298-09-9,68298-74-8,68298-78-2,68299-21-8,68299-39-8,68329-56-6,68391-09-3,68555-70-4,68555-75-9,68555-90-8,68555-91-9,68555-92-0,68568-77-4,68586-13-0,68586-14-1,68608-13-9,68608-14-0,68649-26-3,68797-76-2,68815-72-5,68867-60-7,68867-62-9,68877-32-7,68891-98-5,68909-15-9,68957-32-4,68957-53-9,68957-58-4,68957-61-9,70225-16-0,70248-52-1,70776-36-2,70900-36-6,70900-40-2,71487-20-2,73772-32-4,73772-33-5,73772-34-6,76848-59-4,76848-68-5,80621-17-6,81190-38-7,82382-12-5,85665-64-1,85665-66-3,86525-30-6,86525-43-1,86525-48-6,86525-51-1,86525-52-2,89863-48-9,89863-49-0,89863-50-3,89863-55-8,89863-56-9,89863-63-8,89863-64-9,91081-99-1,93416-31-0,93572-72-6,944578-05-6","conc":"1E-11","altq":"50","tox":[1],"date":"2024.04.24","url":"https://toxicdms.moenv.gov.tw/Chm/Detail1/169-05"},{"id":"169-04","zh":"全氟辛酸及其鹽類與相關化合物","en":"Perfluorooctanoic acid(PFOA),its salts and PFOA related compounds","formula":"-","cas":"335-67-1,45285-51-6,90480-55-0,1882109-81-0,1882109-80-9,1882109-79-6,1882109-78-5,1882109-77-4,1882109-76-3,1882109-75-2,1882109-74-1,1882109-73-0,1882109-72-9,1882109-71-8,1882109-70-7,1882109-68-3,1882109-67-2,1882109-66-1,1882109-65-0,1882109-64-9,1882109-63-8,1882109-69-4,1882109-62-7,1882109-61-6,1882109-60-5,1882109-59-2,1882109-58-1,1812247-20-3,1812247-19-0,1812247-18-9,1812247-17-8,1192593-79-5,1144512-36-6,1144512-35-5,1144512-34-4,1144512-18-4,909009-42-3,705240-04-6,207678-51-1,123116-17-6,35605-76-6,15166-06-0,90480-56-1,3825-26-1,335-95-5,2395-00-8,17125-58-5,335-93-3,68141-02-6,98241-25-9,13058-06-5,1195164-59-0,19742-57-5,61436-04-2,29457-73-6,18017-22-6,15739-82-9,15715-47-6,68333-92-6,69278-80-4,91032-01-8,72968-38-8,72623-77-9,376-27-2,3108-24-5,33496-48-9,68412-69-1,93062-53-4,40143-79-1,610800-34-5,335-66-0,507-63-1,307-50-6,307-60-8,307-63-1,335-79-5,376-04-5,423-62-1,558-97-4,677-93-0,3248-61-1,3248-63-3,90622-71-2,2043-53-0,2043-54-1,30046-31-2,65510-55-6,65510-56-7,68188-12-5,68390-33-0,21652-58-4,30389-25-4,60699-51-6,176676-70-3,39239-77-5,1545-59-1,865-86-1,87017-97-8,678-39-7,70887-94-4,53826-13-4,191852-87-6,70887-84-2,27854-31-5,54009-73-3,63295-27-2,63295-28-3,63295-29-4,63295-18-1,63295-19-2,63295-23-8,63295-24-9,63295-22-7,94158-70-0,94200-46-1,94200-47-2,94200-48-3,94200-50-7,94200-51-8,94200-52-9,57678-03-2,57678-03-2,678-41-1,678-41-1,93857-44-4,93857-45-5,57678-05-4,1895-26-7,90179-37-6,98005-85-7,98005-84-6,1158182-60-5,1578186-42-1,1158182-61-6,93776-20-6,93776-21-7,63295-20-5,63295-26-1,2343-53-5,1578186-53-4,1578186-56-7,1578186-64-7,1578186-57-8,149790-22-7,441765-20-4,16083-78-6,4980-53-4,6014-75-1,16083-87-7,52956-82-8,74256-14-7,74256-15-8,17741-60-5,17741-60-5,2144-54-9,2144-54-9,27905-45-9,27905-45-9,1996-88-9,1996-88-9,85631-54-5,91615-22-4,94158-63-1,94158-64-2,94158-65-3,146955-29-5,76962-34-0,93776-12-6,93776-13-7,93776-15-9,94159-83-8,94159-79-2,94159-80-5,94159-82-7,99955-83-6,99955-83-6,302911-86-0,302911-86-0,3102-79-2,74612-30-9,101947-16-4,146090-84-8,78560-44-8,83048-65-1,123445-18-1,246234-80-0,1189587-64-1,68187-42-8,70969-47-0,95370-51-7,148240-85-1,148240-87-3,148240-89-5,183146-60-3,71608-61-2,94200-45-0,93776-00-2,77117-48-7,1835250-28-6,182130-12-7,1835250-47-9,182130-14-9,182130-15-0,6145-05-7,931415-52-0,138472-76-1,117146-18-6,133310-73-3,137338-39-7,137338-40-0,137338-41-1,154478-87-2,1835251-22-3,1244062-17-6,250738-42-2,116177-54-9,200817-54-5,93454-70-7,125635-85-0,90499-29-9,93454-71-8,133299-41-9,100550-08-1,1244062-16-5,31200-97-2,423-56-3,307-37-9,307-46-0,135984-68-8,864551-38-2,864551-40-6,63967-40-8,335-73-9,63967-42-0,56900-98-2,88243-13-4,88243-12-3,55427-54-8,88271-22-1,88243-14-5,88243-15-6,88247-39-6,88243-11-2,88243-16-7,88243-10-1,88247-40-9,88243-17-8,88243-09-8,121500-31-0,67549-47-7,67535-33-5,38565-53-6,114482-33-6,99679-40-0,93776-18-2,94817-79-5,94817-80-8,121912-26-3,25935-14-2,100155-23-5,100107-48-0,2089109-26-0,2089109-27-1,145441-32-3,171184-16-0,171184-17-1,171184-04-6,2089109-30-6,80234-03-3,80244-66-2,34143-74-3,76830-13-2,121913-10-8,39108-34-4,120226-60-0,438237-73-1,63225-57-0,63225-58-1,54950-06-0,441765-12-4,54207-62-4,481050-04-8,441765-14-6,160819-47-6,160819-50-1,160819-49-8,121912-28-5,727351-53-3,1513864-17-9,71940-07-3,71625-52-0,1513863-91-6,1513863-92-7,704870-51-9,1513864-01-1,67333-62-4,1513863-96-1,1513863-97-2,1383438-89-8,1383438-90-1,93128-66-6,755698-73-8,690947-60-5,62880-96-0,62880-98-2,1513864-19-1,1513864-12-4,1513864-11-3,80475-33-8,34455-23-7,34455-24-8,438237-77-5,34455-21-5,34455-35-1,34695-29-9,34695-31-3,441765-18-0,98900-53-9,115592-83-1,129783-45-5,144031-01-6,116984-14-6,74049-08-4,74049-08-4,65104-45-2,53515-73-4,93480-00-3,934505-67-6,142636-88-2,90622-99-4,71356-38-2,85681-64-7,125328-29-2,325459-92-5,326475-46-1,39186-68-0,41358-63-8,24216-05-5,53517-98-9,335-90-0,85938-56-3,89685-61-0,84029-60-7,138473-79-7,89932-71-8,178766-44-4,376-23-8,91707-61-8,30295-53-5,308-01-0,331755-02-3,103555-98-2,90179-39-8,5158-52-1,57670-46-9,98900-76-6,98900-75-5,98046-76-5,154380-30-0","conc":"1E-11","altq":"50","tox":[1,2,4],"date":"2018.06.28","url":"https://toxicdms.moenv.gov.tw/Chm/Detail1/169-04"},{"id":"169-01","zh":"全氟辛烷磺酸及其鹽類與相關化合物","en":"Perfluorooctane sulfonic acid(PFOS),its salts and PFOS related compounds","formula":"-","cas":"1763-23-1,2795-39-3,29457-72-5,29081-56-9,70225-14-8,56773-42-3,251099-16-8,307-35-7","conc":"1E-11","altq":"50","tox":[1,2,4],"date":"2010.12.24","url":"https://toxicdms.moenv.gov.tw/Chm/Detail1/169-01"},{"id":"168-01","zh":"十氯酮","en":"Chlordecone","formula":"C10Cl10O","cas":"143-50-0","conc":"1","altq":"50","tox":[1,3],"date":"2010.12.24","url":"https://toxicdms.moenv.gov.tw/Chm/Detail1/168-01"},{"id":"167-01","zh":"滅蟻樂","en":"Mirex","formula":"C10Cl12","cas":"2385-85-5","conc":"1","altq":"50","tox":[1,3],"date":"2010.12.24","url":"https://toxicdms.moenv.gov.tw/Chm/Detail1/167-01"},{"id":"166-01","zh":"雙酚A","en":"4,4-isopropylidene diphenol (Bisphenol A)","formula":"C12H16O2","cas":"80-05-7","conc":"30","altq":"","tox":[4],"date":"2009.08.06","url":"https://toxicdms.moenv.gov.tw/Chm/Detail1/166-01"},{"id":"165-02","zh":"壬基酚聚乙氧基醇","en":"Nonylphenol polyethylene glycol ether","formula":"(C2H4O)nC15H24O","cas":"9016-45-9,26027-38-3,104-35-8,1119449-37-4,1119449-38-5,127087-87-0,14409-72-4,156609-10-8,20427-84-3,20636-48-0,26264-02-8,26571-11-9,27176-93-8,27177-01-1,27177-03-3,27177-05-5,27177-08-8,27942-27-4,27986-36-3,34166-38-6,37205-87-1,42173-90-0,51938-25-1,57321-10-5,65455-69-8,65455-72-3,68412-54-4,7311-27-5,85005-55-6,91648-64-5","conc":"0.1","altq":"50","tox":[1,4],"date":"2008.08.06","url":"https://toxicdms.moenv.gov.tw/Chm/Detail1/165-02"},{"id":"165-01","zh":"壬基酚","en":"Nonylphenol","formula":"C6H4(OH)C9H19","cas":"25154-52-3,84852-15-3,104-40-5,11066-49-2,142731-63-3,17404-66-9,186825-36-5,186825-39-8,26543-97-5,30784-30-6,521947-27-3,52427-13-1,90481-04-2,91672-41-2","conc":"0.1","altq":"50","tox":[1,3,4],"date":"2008.08.06","url":"https://toxicdms.moenv.gov.tw/Chm/Detail1/165-01"},{"id":"164-01","zh":"聯胺","en":"Hydrazine","formula":"H2NNH2","cas":"302-01-2","conc":"1","altq":"","tox":[4],"date":"2000.03.15","url":"https://toxicdms.moenv.gov.tw/Chm/Detail1/164-01"},{"id":"163-01","zh":"二環戊二烯","en":"Dicyclopentadiene","formula":"C10H12","cas":"77-73-6","conc":"1","altq":"","tox":[4],"date":"2000.03.15","url":"https://toxicdms.moenv.gov.tw/Chm/Detail1/163-01"},{"id":"162-01","zh":"二氯溴甲烷","en":"Dichlorobromomethane","formula":"CHBrCl2","cas":"75-27-4","conc":"1","altq":"","tox":[4],"date":"2000.03.15","url":"https://toxicdms.moenv.gov.tw/Chm/Detail1/162-01"},{"id":"161-01","zh":"2,4-二氯酚","en":"2,4-Dichlorophenol","formula":"Cl2C6H3OH","cas":"120-83-2","conc":"1","altq":"","tox":[4],"date":"2000.03.15","url":"https://toxicdms.moenv.gov.tw/Chm/Detail1/161-01"},{"id":"160-01","zh":"甲基第三丁基醚","en":"Methyl-tert-butyl ether","formula":"(CH3)3COCH3","cas":"1634-04-4","conc":"20","altq":"","tox":[4],"date":"2000.03.15","url":"https://toxicdms.moenv.gov.tw/Chm/Detail1/160-01"},{"id":"159-01","zh":"胺基硫脲","en":"Thiosemicarbazide 1-amino-2-thiourea","formula":"CH5N3S","cas":"79-19-6","conc":"1","altq":"50","tox":[3],"date":"2000.03.15","url":"https://toxicdms.moenv.gov.tw/Chm/Detail1/159-01"},{"id":"158-01","zh":"三氯化磷","en":"Phosphorus trichloride","formula":"PCl3","cas":"7719-12-2","conc":"1","altq":"50","tox":[3],"date":"2000.03.15","url":"https://toxicdms.moenv.gov.tw/Chm/Detail1/158-01"},{"id":"157-01","zh":"磷化氫","en":"Phosphine","formula":"PH3","cas":"7803-51-2","conc":"1","altq":"50","tox":[3],"date":"2000.03.15","url":"https://toxicdms.moenv.gov.tw/Chm/Detail1/157-01"},{"id":"156-01","zh":"氟","en":"Fluorine","formula":"F2","cas":"7782-41-4","conc":"1","altq":"50","tox":[3],"date":"2000.03.15","url":"https://toxicdms.moenv.gov.tw/Chm/Detail1/156-01"},{"id":"155-01","zh":"1,2,3-三氯丙烷","en":"1,2,3-Trichloropropane","formula":"ClCH2CHClCH2Cl","cas":"96-18-4","conc":"1","altq":"50","tox":[2],"date":"2000.03.15","url":"https://toxicdms.moenv.gov.tw/Chm/Detail1/155-01"},{"id":"154-01","zh":"氧化苯乙烯","en":"Styrene oxide","formula":"C6H5CHCH2O","cas":"96-09-3","conc":"1","altq":"50","tox":[2],"date":"2000.03.15","url":"https://toxicdms.moenv.gov.tw/Chm/Detail1/154-01"},{"id":"153-01","zh":"二甲基胺甲醯氯","en":"Dimethylcarbamyl chloride","formula":"(CH3)2NCOCl","cas":"79-44-7","conc":"1","altq":"50","tox":[2],"date":"2000.03.15","url":"https://toxicdms.moenv.gov.tw/Chm/Detail1/153-01"},{"id":"152-01","zh":"對-氯-鄰-甲苯胺","en":"p-Chloro-o-toluidine","formula":"C7H8ClN","cas":"95-69-2","conc":"1","altq":"50","tox":[2],"date":"2000.03.15","url":"https://toxicdms.moenv.gov.tw/Chm/Detail1/152-01"},{"id":"151-01","zh":"鈹","en":"Beryllium","formula":"Be","cas":"7440-41-7","conc":"95","altq":"50","tox":[2],"date":"2000.03.15","url":"https://toxicdms.moenv.gov.tw/Chm/Detail1/151-01"},{"id":"150-01","zh":"六氯-1,3-丁二烯","en":"Hexachloro-1,3-butadiene","formula":"Cl2CCClCClCCl2","cas":"87-68-3","conc":"1","altq":"50","tox":[1],"date":"2000.03.15","url":"https://toxicdms.moenv.gov.tw/Chm/Detail1/150-01"},{"id":"149-01","zh":"六氯乙烷","en":"Hexachloroethane","formula":"Cl3CCCl3","cas":"67-72-1","conc":"1","altq":"50","tox":[1],"date":"2000.03.15","url":"https://toxicdms.moenv.gov.tw/Chm/Detail1/149-01"},{"id":"148-35","zh":"碘化三茬錫","en":"Trixylyltin iodide","formula":"[(CH3)2C6H3]3SnI","cas":"353747-48-5","conc":"1","altq":"","tox":[4],"date":"2000.03.15","url":"https://toxicdms.moenv.gov.tw/Chm/Detail1/148-35"},{"id":"148-34","zh":"氟化三茬錫","en":"Trixylyltin fluoride","formula":"[(CH3)2C6H3]3SnF","cas":"353747-47-4","conc":"1","altq":"","tox":[4],"date":"2000.03.15","url":"https://toxicdms.moenv.gov.tw/Chm/Detail1/148-34"},{"id":"148-33","zh":"氯化三茬錫","en":"Trixylyltin chloride","formula":"[(CH3)2C6H3]3SnCl","cas":"353747-46-3","conc":"1","altq":"","tox":[4],"date":"2000.03.15","url":"https://toxicdms.moenv.gov.tw/Chm/Detail1/148-33"},{"id":"148-32","zh":"溴化三茬錫","en":"Trixylyltin bromide","formula":"[(CH3)2C6H3]3SnBr","cas":"353747-45-2","conc":"1","altq":"","tox":[4],"date":"2000.03.15","url":"https://toxicdms.moenv.gov.tw/Chm/Detail1/148-32"},{"id":"148-31","zh":"參(三苯錫)甲烷","en":"Tritriphenylstannyl-methane","formula":"[(C6H5)3Sn]3CH","cas":"50485-45-5","conc":"1","altq":"","tox":[4],"date":"2000.03.15","url":"https://toxicdms.moenv.gov.tw/Chm/Detail1/148-31"},{"id":"148-30","zh":"碘化三甲苯錫","en":"Tritolyltin iodide","formula":"(CH3C6H4)3SnI","cas":"353747-44-1","conc":"1","altq":"","tox":[4],"date":"2000.03.15","url":"https://toxicdms.moenv.gov.tw/Chm/Detail1/148-30"},{"id":"148-29","zh":"氫氧化三甲苯錫","en":"Tritolyltin hydroxide","formula":"(CH3C6H4)3SnOH","cas":"228262-76-8","conc":"1","altq":"","tox":[4],"date":"2000.03.15","url":"https://toxicdms.moenv.gov.tw/Chm/Detail1/148-29"},{"id":"148-28","zh":"氟化三甲苯錫","en":"Tritolyltin fluoride","formula":"(CH3C6H4)3SnF","cas":"353747-43-0","conc":"1","altq":"","tox":[4],"date":"2000.03.15","url":"https://toxicdms.moenv.gov.tw/Chm/Detail1/148-28"},{"id":"148-27","zh":"氯化三甲苯錫","en":"Tritolyltin chloride","formula":"(CH3C6H4)3SnCl","cas":"353747-42-9","conc":"1","altq":"","tox":[4],"date":"2000.03.15","url":"https://toxicdms.moenv.gov.tw/Chm/Detail1/148-27"},{"id":"148-26","zh":"溴化三甲苯錫","en":"Tritolyltin bromide","formula":"(CH3C6H4)3SnBr","cas":"58436-46-7","conc":"1","altq":"","tox":[4],"date":"2000.03.15","url":"https://toxicdms.moenv.gov.tw/Chm/Detail1/148-26"},{"id":"148-25","zh":"氟化三丙錫","en":"Tripropyltin fluoride","formula":"(C3H7)3SnF","cas":"682-32-6","conc":"1","altq":"","tox":[4],"date":"2000.03.15","url":"https://toxicdms.moenv.gov.tw/Chm/Detail1/148-25"},{"id":"148-24","zh":"氯化三丙錫","en":"Tripropyltin chloride","formula":"(C3H7)3SnCl","cas":"2279-76-7","conc":"1","altq":"","tox":[4],"date":"2000.03.15","url":"https://toxicdms.moenv.gov.tw/Chm/Detail1/148-24"},{"id":"148-23","zh":"溴化三丙錫","en":"Tripropyltin bromide","formula":"(C3H7)3SnBr","cas":"2767-61-5","conc":"1","altq":"","tox":[4],"date":"2000.03.15","url":"https://toxicdms.moenv.gov.tw/Chm/Detail1/148-23"},{"id":"148-22","zh":"三苯基-α-萘錫","en":"Triphenyl-α-naphthyltin","formula":"(C6H5)3SnC10H7","cas":"81134-67-0","conc":"1","altq":"","tox":[4],"date":"2000.03.15","url":"https://toxicdms.moenv.gov.tw/Chm/Detail1/148-22"},{"id":"148-21","zh":"氯化三苯錫","en":"Triphenyltin chloride","formula":"(C6H5)3SnCl","cas":"639-58-7","conc":"1","altq":"50","tox":[1,3],"date":"2000.03.15","url":"https://toxicdms.moenv.gov.tw/Chm/Detail1/148-21"},{"id":"148-20","zh":"醋酸三苯錫","en":"Triphenyltin acetate","formula":"(C6H5)3SnOOCCH3","cas":"900-95-8","conc":"1","altq":"50","tox":[1,3,4],"date":"2000.03.15","url":"https://toxicdms.moenv.gov.tw/Chm/Detail1/148-20"},{"id":"148-19","zh":"碘化三苯錫","en":"Triphenyltin iodide","formula":"(C6H5)3SnI","cas":"894-09-7","conc":"1","altq":"","tox":[4],"date":"2000.03.15","url":"https://toxicdms.moenv.gov.tw/Chm/Detail1/148-19"},{"id":"148-18","zh":"氟化三苯錫","en":"Triphenyltin fluoride","formula":"(C6H5)3SnF","cas":"379-52-2","conc":"1","altq":"","tox":[4],"date":"2000.03.15","url":"https://toxicdms.moenv.gov.tw/Chm/Detail1/148-18"},{"id":"148-17","zh":"溴化三苯錫","en":"Triphenyltin bromide","formula":"(C6H5)3SnBr","cas":"962-89-0","conc":"1","altq":"50","tox":[1],"date":"2000.03.15","url":"https://toxicdms.moenv.gov.tw/Chm/Detail1/148-17"},{"id":"148-16","zh":"三苯基-對-甲苯錫","en":"Triphenyl-p-tolyltin","formula":"(C6H5)3Sn(C6H4CH3)","cas":"15807-28-0","conc":"1","altq":"","tox":[4],"date":"2000.03.15","url":"https://toxicdms.moenv.gov.tw/Chm/Detail1/148-16"},{"id":"148-15","zh":"三苯基甲錫","en":"Triphenylmethyltin","formula":"(C6H5)3SnCH3","cas":"1089-59-4","conc":"1","altq":"","tox":[4],"date":"2000.03.15","url":"https://toxicdms.moenv.gov.tw/Chm/Detail1/148-15"},{"id":"148-14","zh":"三苯基芐錫","en":"Triphenylbenzyltin","formula":"(C6H5)3(C6H5CH2)Sn","cas":"2847-58-7","conc":"1","altq":"","tox":[4],"date":"2000.03.15","url":"https://toxicdms.moenv.gov.tw/Chm/Detail1/148-14"},{"id":"148-13","zh":"碘化三正丙錫","en":"Tri-n-propyltin iodide","formula":"(C3H7)3SnI","cas":"7342-45-2","conc":"1","altq":"","tox":[4],"date":"2000.03.15","url":"https://toxicdms.moenv.gov.tw/Chm/Detail1/148-13"},{"id":"148-12","zh":"三正丙基正丁錫","en":"Tri-n-propyl-n-butyltin","formula":"(C3H7)3SnC4H9","cas":"3634-62-6","conc":"1","altq":"","tox":[4],"date":"2000.03.15","url":"https://toxicdms.moenv.gov.tw/Chm/Detail1/148-12"},{"id":"148-11","zh":"三正丙基異丁錫","en":"Tri-n-propylisobutyltin","formula":"(C3H7)3Sn(C4H9)","cas":"92154-74-0","conc":"1","altq":"","tox":[4],"date":"2000.03.15","url":"https://toxicdms.moenv.gov.tw/Chm/Detail1/148-11"},{"id":"148-10","zh":"三正丙基乙錫","en":"Tri-n-propylethyltin","formula":"(C3H7)3SnCH2CH3","cas":"3440-79-7","conc":"1","altq":"","tox":[4],"date":"2000.03.15","url":"https://toxicdms.moenv.gov.tw/Chm/Detail1/148-10"},{"id":"148-09","zh":"順丁烯二酸三丁錫","en":"Tributyltin maleate","formula":"C16H30O4Sn","cas":"4027-18-3,14275-57-1","conc":"1","altq":"","tox":[4],"date":"2000.03.15","url":"https://toxicdms.moenv.gov.tw/Chm/Detail1/148-09"},{"id":"148-08","zh":"月桂酸三丁錫","en":"Tributyltin laurate","formula":"C24H50O2Sn","cas":"3090-36-6","conc":"1","altq":"","tox":[4],"date":"2000.03.15","url":"https://toxicdms.moenv.gov.tw/Chm/Detail1/148-08"},{"id":"148-07","zh":"氫化三丁錫","en":"Tributyltin hydride","formula":"(C4H9)3SnH","cas":"688-73-3","conc":"1","altq":"50","tox":[1,4],"date":"2000.03.15","url":"https://toxicdms.moenv.gov.tw/Chm/Detail1/148-07"},{"id":"148-06","zh":"氟化三丁錫","en":"Tributyltin fluoride","formula":"(C4H9)3SnF","cas":"1983-10-4","conc":"1","altq":"50","tox":[1,3,4],"date":"2000.03.15","url":"https://toxicdms.moenv.gov.tw/Chm/Detail1/148-06"},{"id":"148-05","zh":"氯化三丁錫","en":"Tributyltin chloride","formula":"(C4H9)3SnCl","cas":"1461-22-9","conc":"1","altq":"50","tox":[1,3],"date":"2000.03.15","url":"https://toxicdms.moenv.gov.tw/Chm/Detail1/148-05"},{"id":"148-04","zh":"溴化三丁錫","en":"Tributyltin bromide","formula":"(C4H9)3SnBr","cas":"1461-23-0","conc":"1","altq":"50","tox":[1,3],"date":"2000.03.15","url":"https://toxicdms.moenv.gov.tw/Chm/Detail1/148-04"},{"id":"148-03","zh":"醋酸三丁錫","en":"Tributyltin acetate","formula":"(C4H9)3SnOOCCH3","cas":"56-36-0","conc":"1","altq":"50","tox":[1,3],"date":"2000.03.15","url":"https://toxicdms.moenv.gov.tw/Chm/Detail1/148-03"},{"id":"148-02","zh":"氫氧化三苯錫","en":"Triphenyltin hydroxide","formula":"(C6H5)3SnOH","cas":"76-87-9","conc":"1","altq":"50","tox":[1,3,4],"date":"2000.03.15","url":"https://toxicdms.moenv.gov.tw/Chm/Detail1/148-02"},{"id":"148-01","zh":"氧化三丁錫","en":"Tributyltin oxide Bis(tributyltin)oxide","formula":"(C4H9)3SnOSn(C4H9)3","cas":"56-35-9","conc":"1","altq":"50","tox":[1,3,4],"date":"2000.03.15","url":"https://toxicdms.moenv.gov.tw/Chm/Detail1/148-01"},{"id":"147-01","zh":"1,2-二氯丙烷","en":"1,2-Dichloropropane","formula":"CH3CHClCH2Cl","cas":"78-87-5","conc":"1","altq":"50","tox":[1],"date":"2000.03.15","url":"https://toxicdms.moenv.gov.tw/Chm/Detail1/147-01"},{"id":"146-01","zh":"醋酸乙烯酯","en":"Vinyl acetate","formula":"CH3COOCH=CH2","cas":"108-05-4","conc":"1","altq":"","tox":[4],"date":"1999.12.24","url":"https://toxicdms.moenv.gov.tw/Chm/Detail1/146-01"},{"id":"145-02","zh":"甲苯二胺(同分異構物混合物)","en":"Toluylenediamines(mixed isomers)；(toluene,diamino-) (mixed isomers)","formula":"CH3C6H3(NH2)2","cas":"25376-45-8","conc":"1","altq":"","tox":[4],"date":"1999.12.24","url":"https://toxicdms.moenv.gov.tw/Chm/Detail1/145-02"},{"id":"145-01","zh":"2,4-甲苯二胺","en":"m-Toluylenediamine(m-Tolylene-diamine；toluene- 2,4-diamine)","formula":"C7H10N2","cas":"95-80-7","conc":"1","altq":"","tox":[4],"date":"1999.12.24","url":"https://toxicdms.moenv.gov.tw/Chm/Detail1/145-01"},{"id":"144-01","zh":"硫脲","en":"Thiourea (thiocarbamide)","formula":"(NH2)2CS","cas":"62-56-6","conc":"1","altq":"","tox":[4],"date":"1999.12.24","url":"https://toxicdms.moenv.gov.tw/Chm/Detail1/144-01"},{"id":"143-01","zh":"巴豆醛(2-丁烯醛)","en":"Crotonaldehyde (2-butenal)","formula":"CH3CH=CHCHO","cas":"4170-30-3","conc":"1","altq":"","tox":[4],"date":"1999.12.24","url":"https://toxicdms.moenv.gov.tw/Chm/Detail1/143-01"},{"id":"142-01","zh":"三氟化硼","en":"Boron trifluoride","formula":"BF3","cas":"7637-07-2","conc":"1","altq":"","tox":[4],"date":"1999.12.24","url":"https://toxicdms.moenv.gov.tw/Chm/Detail1/142-01"},{"id":"141-01","zh":"丙烯亞胺","en":"Propyleneimine","formula":"CH3CHCH2NH","cas":"75-55-8","conc":"1","altq":"50","tox":[3],"date":"1999.12.24","url":"https://toxicdms.moenv.gov.tw/Chm/Detail1/141-01"},{"id":"140-01","zh":"炔丙醇(2-丙炔-1-醇)","en":"Propargyl alcohol","formula":"HCCCH2OH","cas":"107-19-7","conc":"1","altq":"50","tox":[3],"date":"1999.12.24","url":"https://toxicdms.moenv.gov.tw/Chm/Detail1/140-01"},{"id":"139-01","zh":"氟乙醯胺","en":"Monofluoroacetamide","formula":"CH2FCONH2","cas":"640-19-7","conc":"1","altq":"50","tox":[3],"date":"1999.12.24","url":"https://toxicdms.moenv.gov.tw/Chm/Detail1/139-01"},{"id":"138-01","zh":"甲基聯胺","en":"Methyl hydrazine","formula":"CH3NHNH2","cas":"60-34-4","conc":"1","altq":"50","tox":[3],"date":"1999.12.24","url":"https://toxicdms.moenv.gov.tw/Chm/Detail1/138-01"},{"id":"137-01","zh":"4,6-二硝基-鄰-甲酚","en":"4,6-Dinitro-o-cresol","formula":"CH3C6H2(NO2)2OH","cas":"534-52-1","conc":"1","altq":"50","tox":[3],"date":"1999.12.24","url":"https://toxicdms.moenv.gov.tw/Chm/Detail1/137-01"},{"id":"136-01","zh":"溴乙烯","en":"Vinyl bromide","formula":"CH2CHBr","cas":"593-60-2","conc":"1","altq":"50","tox":[2],"date":"1999.12.24","url":"https://toxicdms.moenv.gov.tw/Chm/Detail1/136-01"},{"id":"135-01","zh":"三(2,3-二溴丙基)-磷酸酯","en":"Tris-(2,3-dibromopropyl)-phosphate","formula":"BrCH2CH(Br)CH2O3P =O","cas":"126-72-7","conc":"1","altq":"50","tox":[2],"date":"1999.12.24","url":"https://toxicdms.moenv.gov.tw/Chm/Detail1/135-01"},{"id":"134-02","zh":"N-亞硝二乙胺(二乙亞硝胺)","en":"Diethylamine, N-nitroso-( Nitrosamine diethyl )","formula":"(C2H5)2NNO","cas":"55-18-5","conc":"1","altq":"50","tox":[2],"date":"1999.12.24","url":"https://toxicdms.moenv.gov.tw/Chm/Detail1/134-02"},{"id":"134-01","zh":"N-亞硝二甲胺(二甲亞硝胺)","en":"Nitrosodimethylamine (DMNA)","formula":"(CH3)2NNO","cas":"62-75-9","conc":"1","altq":"50","tox":[2],"date":"1999.12.24","url":"https://toxicdms.moenv.gov.tw/Chm/Detail1/134-01"},{"id":"133-01","zh":"N-亞硝-正-甲脲","en":"N-Nitroso-N-methylurea","formula":"C2H5N3O2","cas":"684-93-5","conc":"1","altq":"50","tox":[2],"date":"1999.12.24","url":"https://toxicdms.moenv.gov.tw/Chm/Detail1/133-01"},{"id":"132-01","zh":"六甲基磷酸三胺","en":"Hexamethylphosphoramide (HMPA)","formula":"[N(CH3)2]3PO","cas":"680-31-9","conc":"1","altq":"50","tox":[2],"date":"1999.12.24","url":"https://toxicdms.moenv.gov.tw/Chm/Detail1/132-01"},{"id":"131-01","zh":"硫酸乙酯(硫酸二乙酯)","en":"ethyl sulfate (Diethyl sulfate)","formula":"(C2H5)2SO4","cas":"64-67-5","conc":"1","altq":"50","tox":[2],"date":"1999.12.24","url":"https://toxicdms.moenv.gov.tw/Chm/Detail1/131-01"},{"id":"129-01","zh":"硝苯","en":"Nitrobenzene","formula":"C6H5NO2","cas":"98-95-3","conc":"10","altq":"50","tox":[1],"date":"1999.12.24","url":"https://toxicdms.moenv.gov.tw/Chm/Detail1/129-01"},{"id":"128-01","zh":"六氯芬(2,2\u0027-二羥-3,3\u0027, 5,5\u0027,6,6\u0027-六氯二苯甲烷)","en":"Hexachlorophene (2,2\u0027-dihydroxy-3, 3\u0027,5,5\u0027,6,6\u0027-hexachlorodiphenylmethane)","formula":"(C6HCl3OH)2CH2","cas":"70-30-4","conc":"10","altq":"50","tox":[1],"date":"1999.12.24","url":"https://toxicdms.moenv.gov.tw/Chm/Detail1/128-01"},{"id":"126-01","zh":"氯乙烷","en":"Chloroethane (Ethyl chloride)","formula":"C2H5Cl","cas":"75-00-3","conc":"1","altq":"50","tox":[1],"date":"1999.12.24","url":"https://toxicdms.moenv.gov.tw/Chm/Detail1/126-01"},{"id":"125-01","zh":"三溴甲烷(溴仿)","en":"Bromoform (Tribromomethane)","formula":"CHBr3","cas":"75-25-2","conc":"1","altq":"50","tox":[1],"date":"1999.12.24","url":"https://toxicdms.moenv.gov.tw/Chm/Detail1/125-01"},{"id":"124-01","zh":"二溴甲烷","en":"Dibromomethane (Methylenebromide)","formula":"CH2Br2","cas":"74-95-3","conc":"1","altq":"50","tox":[1],"date":"1999.12.24","url":"https://toxicdms.moenv.gov.tw/Chm/Detail1/124-01"},{"id":"123-01","zh":"蒽","en":"Anthracene","formula":"C6H4(CH)2C6H4","cas":"120-12-7","conc":"10","altq":"50","tox":[1],"date":"1999.12.24","url":"https://toxicdms.moenv.gov.tw/Chm/Detail1/123-01"},{"id":"122-01","zh":"α-苯氯乙酮(w-苯氯乙酮)","en":"α-Chloroacetophenone (w-Chloroacetophenone )","formula":"C6H5COCH2Cl","cas":"532-27-4","conc":"1","altq":"50","tox":[1,3],"date":"1999.12.24","url":"https://toxicdms.moenv.gov.tw/Chm/Detail1/122-01"},{"id":"121-01","zh":"三乙胺","en":"Triethylamine","formula":"C6H15N","cas":"121-44-8","conc":"1","altq":"","tox":[4],"date":"1999.12.24","url":"https://toxicdms.moenv.gov.tw/Chm/Detail1/121-01"},{"id":"120-01","zh":"1,3-丙烷礦內酯","en":"Propane sultone","formula":"C3H6O3S","cas":"1120-71-4","conc":"1","altq":"","tox":[4],"date":"1999.12.24","url":"https://toxicdms.moenv.gov.tw/Chm/Detail1/120-01"},{"id":"119-01","zh":"三乙酸基氨","en":"Nitrilotri acetic acid","formula":"C6H9NO6","cas":"139-13-9","conc":"1","altq":"","tox":[4],"date":"1999.12.24","url":"https://toxicdms.moenv.gov.tw/Chm/Detail1/119-01"},{"id":"118-01","zh":"4,4’-二胺基二苯甲烷","en":"4,4’-Methylenedianiline","formula":"C13H14N2","cas":"101-77-9","conc":"1","altq":"","tox":[4],"date":"1999.12.24","url":"https://toxicdms.moenv.gov.tw/Chm/Detail1/118-01"},{"id":"117-01","zh":"甲基異丁酮","en":"Methyl isobutyl ketone","formula":"C6H12O","cas":"108-10-1","conc":"1","altq":"","tox":[4],"date":"1999.12.24","url":"https://toxicdms.moenv.gov.tw/Chm/Detail1/117-01"},{"id":"116-01","zh":"乙苯","en":"Ethylbenzene","formula":"C8H10","cas":"100-41-4","conc":"70","altq":"","tox":[4],"date":"1999.12.24","url":"https://toxicdms.moenv.gov.tw/Chm/Detail1/116-01"},{"id":"115-01","zh":"二苯胺","en":"Diphenylamine","formula":"C12H11N","cas":"122-39-4","conc":"1","altq":"","tox":[4],"date":"1999.12.24","url":"https://toxicdms.moenv.gov.tw/Chm/Detail1/115-01"},{"id":"114-01","zh":"二乙醇胺","en":"Diethanolamine","formula":"C4H11NO2","cas":"111-42-2","conc":"50","altq":"","tox":[4],"date":"1999.12.24","url":"https://toxicdms.moenv.gov.tw/Chm/Detail1/114-01"},{"id":"113-01","zh":"1,3-二氯丙烯","en":"1,3-Dichloropropene","formula":"C3H4Cl2","cas":"542-75-6","conc":"50","altq":"","tox":[4],"date":"1999.12.24","url":"https://toxicdms.moenv.gov.tw/Chm/Detail1/113-01"},{"id":"112-01","zh":"間-甲酚","en":"m-Cresol","formula":"C7H8O","cas":"108-39-4","conc":"1","altq":"","tox":[4],"date":"1999.12.24","url":"https://toxicdms.moenv.gov.tw/Chm/Detail1/112-01"},{"id":"111-01","zh":"氯丁二烯","en":"Chloroprene","formula":"C4H5Cl","cas":"126-99-8","conc":"1","altq":"","tox":[4],"date":"1999.12.24","url":"https://toxicdms.moenv.gov.tw/Chm/Detail1/111-01"},{"id":"110-01","zh":"六氯內-甲烯基-四氫苯二甲酸","en":"Chlorendic acid","formula":"C9H4Cl6O4","cas":"115-28-6","conc":"1","altq":"","tox":[4],"date":"1999.12.24","url":"https://toxicdms.moenv.gov.tw/Chm/Detail1/110-01"},{"id":"109-01","zh":"氰胺化鈣","en":"Calcium cyanamide","formula":"CN2Ca","cas":"156-62-7","conc":"1","altq":"","tox":[4],"date":"1999.12.24","url":"https://toxicdms.moenv.gov.tw/Chm/Detail1/109-01"},{"id":"108-01","zh":"丁醛","en":"Butyraldehyde","formula":"C4H8O","cas":"123-72-8","conc":"1","altq":"","tox":[4],"date":"1999.12.24","url":"https://toxicdms.moenv.gov.tw/Chm/Detail1/108-01"},{"id":"107-01","zh":"丙烯酸丁酯","en":"Butyl acrylate","formula":"C7H12O2","cas":"141-32-2","conc":"1","altq":"","tox":[4],"date":"1999.12.24","url":"https://toxicdms.moenv.gov.tw/Chm/Detail1/107-01"},{"id":"106-01","zh":"苯甲氯","en":"Benzyl chloride","formula":"C7H7Cl","cas":"100-44-7","conc":"1","altq":"","tox":[4],"date":"1999.12.24","url":"https://toxicdms.moenv.gov.tw/Chm/Detail1/106-01"},{"id":"105-01","zh":"乙腈","en":"Acetonitrile","formula":"CH3CN","cas":"75-05-8","conc":"1","altq":"","tox":[4],"date":"1999.12.24","url":"https://toxicdms.moenv.gov.tw/Chm/Detail1/105-01"},{"id":"104-01","zh":"乙醛","en":"Acetaldehyde","formula":"C2H4O","cas":"75-07-0","conc":"1","altq":"","tox":[4],"date":"1999.12.24","url":"https://toxicdms.moenv.gov.tw/Chm/Detail1/104-01"},{"id":"103-01","zh":"氰化氫","en":"Hydrogen cyanide","formula":"HCN","cas":"74-90-8","conc":"1","altq":"50","tox":[3],"date":"1999.12.24","url":"https://toxicdms.moenv.gov.tw/Chm/Detail1/103-01"},{"id":"102-01","zh":"1,2-二苯基聯胺","en":"1,2-Diphenylhydrazine","formula":"C12H12N2","cas":"122-66-7","conc":"1","altq":"50","tox":[3],"date":"1999.12.24","url":"https://toxicdms.moenv.gov.tw/Chm/Detail1/102-01"},{"id":"101-01","zh":"丙烯醇","en":"Allyl alcohol","formula":"C3H6O","cas":"107-18-6","conc":"1","altq":"50","tox":[3],"date":"1999.12.24","url":"https://toxicdms.moenv.gov.tw/Chm/Detail1/101-01"},{"id":"100-01","zh":"丙烯醛","en":"Acrolein","formula":"C3H4O","cas":"107-02-8","conc":"1","altq":"50","tox":[3],"date":"1999.12.24","url":"https://toxicdms.moenv.gov.tw/Chm/Detail1/100-01"},{"id":"099-01","zh":"四羰化鎳","en":"Nickel carbonyl","formula":"C4NiO4","cas":"13463-39-3","conc":"1","altq":"50","tox":[2],"date":"1999.12.24","url":"https://toxicdms.moenv.gov.tw/Chm/Detail1/099-01"},{"id":"098-02","zh":"甲醯胺","en":"Formamide","formula":"HCONH2","cas":"75-12-7","conc":"10","altq":"50","tox":[1,2],"date":"2011.07.20","url":"https://toxicdms.moenv.gov.tw/Chm/Detail1/098-02"},{"id":"098-01","zh":"二甲基甲醯胺","en":"N,N-Dimethyl formamide","formula":"C3H7NO","cas":"68-12-2","conc":"30","altq":"50","tox":[2],"date":"1999.12.24","url":"https://toxicdms.moenv.gov.tw/Chm/Detail1/098-01"},{"id":"097-01","zh":"吡啶","en":"Pyridine","formula":"C5H5N","cas":"110-86-1","conc":"1","altq":"50","tox":[1],"date":"1999.12.24","url":"https://toxicdms.moenv.gov.tw/Chm/Detail1/097-01"},{"id":"096-01","zh":"β-丙內酯","en":"β-Propiolactone","formula":"C3H4O2","cas":"57-57-8","conc":"1","altq":"50","tox":[1],"date":"1999.12.24","url":"https://toxicdms.moenv.gov.tw/Chm/Detail1/096-01"},{"id":"095-01","zh":"碘甲烷","en":"Methyl iodide","formula":"CH3I","cas":"74-88-4","conc":"1","altq":"50","tox":[1],"date":"1999.12.24","url":"https://toxicdms.moenv.gov.tw/Chm/Detail1/095-01"},{"id":"094-07","zh":"八氯萘","en":"Octachloronaphthalene","formula":"C10Cl8","cas":"2234-13-1","conc":"1","altq":"50","tox":[1],"date":"1999.12.24","url":"https://toxicdms.moenv.gov.tw/Chm/Detail1/094-07"},{"id":"094-06","zh":"七氯萘","en":"Heptachloronaphthalene","formula":"C10HCl7","cas":"32241-08-0","conc":"1","altq":"50","tox":[1],"date":"2015.12.31","url":"https://toxicdms.moenv.gov.tw/Chm/Detail1/094-06"},{"id":"094-05","zh":"六氯萘","en":"Hexachloronaphthalene","formula":"C10H2Cl6","cas":"1335-87-1","conc":"1","altq":"50","tox":[1],"date":"1999.12.24","url":"https://toxicdms.moenv.gov.tw/Chm/Detail1/094-05"},{"id":"094-04","zh":"五氯萘","en":"Pentachloronaphthalene","formula":"C10H3Cl5","cas":"1321-64-8","conc":"1","altq":"50","tox":[1],"date":"2015.12.31","url":"https://toxicdms.moenv.gov.tw/Chm/Detail1/094-04"},{"id":"094-03","zh":"四氯萘","en":"Tetrachloronaphthalene","formula":"C10H4Cl4","cas":"1335-88-2","conc":"1","altq":"50","tox":[1],"date":"2015.12.31","url":"https://toxicdms.moenv.gov.tw/Chm/Detail1/094-03"},{"id":"094-02","zh":"三氯萘","en":"Trichloronaphthalene","formula":"C10H5Cl3","cas":"1321-65-9","conc":"1","altq":"50","tox":[1],"date":"2015.12.31","url":"https://toxicdms.moenv.gov.tw/Chm/Detail1/094-02"},{"id":"094-01","zh":"二氯萘","en":"Dichloronaphthalene","formula":"C10H6Cl2","cas":"1825-31-6","conc":"1","altq":"50","tox":[1],"date":"2015.12.31","url":"https://toxicdms.moenv.gov.tw/Chm/Detail1/094-01"},{"id":"093-01","zh":"1,4-二氧陸圜","en":"1,4-Dioxane","formula":"C4H8O2","cas":"123-91-1","conc":"1","altq":"50","tox":[1],"date":"1999.12.24","url":"https://toxicdms.moenv.gov.tw/Chm/Detail1/093-01"},{"id":"092-01","zh":"二苯駢呋喃","en":"Dibenzofuran","formula":"C12H8O","cas":"132-64-9","conc":"70","altq":"50","tox":[1],"date":"1999.12.24","url":"https://toxicdms.moenv.gov.tw/Chm/Detail1/092-01"},{"id":"091-08","zh":"2,2\u0027,3,4,4\u0027,5\u0027,6-七溴二苯醚","en":"2,2’,3,4,4’,5’,6-heptabromodiphenyl ether (BDE -183)","formula":"C12H3Br7O","cas":"207122-16-5","conc":"1","altq":"50","tox":[1],"date":"2010.12.24","url":"https://toxicdms.moenv.gov.tw/Chm/Detail1/091-08"},{"id":"091-07","zh":"2,2\u0027,3,3\u0027,4,5\u0027,6-七溴二苯醚","en":"2,2’,3,3’,4,5’,6-heptabromodiphenyl ether (BDE-175)","formula":"C12H3Br7O","cas":"446255-22-7","conc":"1","altq":"50","tox":[1],"date":"2010.12.24","url":"https://toxicdms.moenv.gov.tw/Chm/Detail1/091-07"},{"id":"091-06","zh":"2,2\u0027,4,4\u0027,5,6\u0027-六溴二苯醚","en":"2,2’,4,4’,5,6’-hexabromodiphenyl ether (BDE-154)","formula":"C12H4Br6O","cas":"207122-15-4","conc":"1","altq":"50","tox":[1],"date":"2010.12.24","url":"https://toxicdms.moenv.gov.tw/Chm/Detail1/091-06"},{"id":"091-05","zh":"2,2\u0027,4,4\u0027,5,5\u0027-六溴二苯醚","en":"2,2’,4,4’,5,5’-hexabromodiphenyl ether (BDE-153)","formula":"C12H4Br6O","cas":"68631-49-2","conc":"1","altq":"50","tox":[1],"date":"2010.12.24","url":"https://toxicdms.moenv.gov.tw/Chm/Detail1/091-05"},{"id":"091-04","zh":"四溴二苯醚","en":"Tetrabromodiphenyl ether","formula":"C12H6Br4O","cas":"40088-47-9,5436-43-1","conc":"1","altq":"50","tox":[1],"date":"2010.12.24","url":"https://toxicdms.moenv.gov.tw/Chm/Detail1/091-04"},{"id":"091-03","zh":"五溴二苯醚","en":"Pentabromodiphenyl ether","formula":"C12H5Br5O","cas":"32534-81-9,60348-60-9","conc":"1","altq":"50","tox":[1],"date":"2005.12.30","url":"https://toxicdms.moenv.gov.tw/Chm/Detail1/091-03"},{"id":"091-02","zh":"八溴二苯醚","en":"Octabromodiphenyl ether","formula":"C12H2Br8O","cas":"32536-52-0","conc":"1","altq":"50","tox":[1],"date":"2005.12.30","url":"https://toxicdms.moenv.gov.tw/Chm/Detail1/091-02"},{"id":"091-01","zh":"十溴二苯醚","en":"Decabromodiphenyl ether","formula":"C12Br10O","cas":"1163-19-5","conc":"1","altq":"50","tox":[1,2],"date":"1999.12.24","url":"https://toxicdms.moenv.gov.tw/Chm/Detail1/091-01"},{"id":"090-01","zh":"氯苯","en":"Chlorobenzene","formula":"C6H5Cl","cas":"108-90-7","conc":"1","altq":"50","tox":[1],"date":"1999.12.24","url":"https://toxicdms.moenv.gov.tw/Chm/Detail1/090-01"},{"id":"089-01","zh":"二硫化碳","en":"Carbon disulfide","formula":"CS2","cas":"75-15-0","conc":"1","altq":"50","tox":[1],"date":"1999.12.24","url":"https://toxicdms.moenv.gov.tw/Chm/Detail1/089-01"},{"id":"088-01","zh":"二氯異丙醚","en":"Bis(2-chloro-1-methylethyl) ether","formula":"C6H12Cl2O","cas":"108-60-1","conc":"1","altq":"50","tox":[1],"date":"1999.12.24","url":"https://toxicdms.moenv.gov.tw/Chm/Detail1/088-01"},{"id":"087-01","zh":"次乙亞胺","en":"Ethyleneimine","formula":"C2H5N","cas":"151-56-4","conc":"1","altq":"50","tox":[2,3],"date":"1999.12.24","url":"https://toxicdms.moenv.gov.tw/Chm/Detail1/087-01"},{"id":"086-01","zh":"硫酸二甲酯","en":"Dimethyl sulfate","formula":"C2H6O4S","cas":"77-78-1","conc":"1","altq":"50","tox":[2,3],"date":"1999.12.24","url":"https://toxicdms.moenv.gov.tw/Chm/Detail1/086-01"},{"id":"085-01","zh":"2,4-二硝基酚","en":"2,4-Dinitrophenol","formula":"C6H4N2O5","cas":"51-28-5","conc":"1","altq":"50","tox":[1,3],"date":"1999.12.24","url":"https://toxicdms.moenv.gov.tw/Chm/Detail1/085-01"},{"id":"084-01","zh":"氯甲酸乙酯","en":"Ethyl chloroformate","formula":"ClCOOC2H5","cas":"541-41-3","conc":"1","altq":"","tox":[4],"date":"1999.12.24","url":"https://toxicdms.moenv.gov.tw/Chm/Detail1/084-01"},{"id":"083-01","zh":"氯乙酸","en":"Chloroacetic acid","formula":"CH2ClCOOH","cas":"79-11-8","conc":"1","altq":"","tox":[4],"date":"1999.12.24","url":"https://toxicdms.moenv.gov.tw/Chm/Detail1/083-01"},{"id":"082-01","zh":"環己烷","en":"Cyclohexane","formula":"C6H12","cas":"110-82-7","conc":"1","altq":"","tox":[4],"date":"1999.12.24","url":"https://toxicdms.moenv.gov.tw/Chm/Detail1/082-01"},{"id":"081-01","zh":"異丙苯","en":"Cumene","formula":"C6H5CH(CH3)2","cas":"98-82-8","conc":"1","altq":"","tox":[4],"date":"1999.12.24","url":"https://toxicdms.moenv.gov.tw/Chm/Detail1/081-01"},{"id":"080-02","zh":"鄰苯二甲酸二丁酯","en":"Dibutyl phthalate (DBP)","formula":"C6H4(COOC4H9)2","cas":"84-74-2","conc":"10","altq":"50","tox":[1,2],"date":"1999.12.24","url":"https://toxicdms.moenv.gov.tw/Chm/Detail1/080-02"},{"id":"080-01","zh":"鄰苯二甲酸二甲酯","en":"Dimethyl phthalate (DMP)","formula":"C6H4(COOCH3)2","cas":"131-11-3","conc":"10","altq":"50","tox":[1],"date":"1999.12.24","url":"https://toxicdms.moenv.gov.tw/Chm/Detail1/080-01"},{"id":"079-01","zh":"二氯甲烷","en":"Dichloromethane(Methylenechloride)","formula":"CH2Cl2","cas":"75-09-2","conc":"25","altq":"","tox":[4],"date":"1999.12.24","url":"https://toxicdms.moenv.gov.tw/Chm/Detail1/079-01"},{"id":"078-01","zh":"氯甲烷","en":"Chloromethane (Methyl chloride)","formula":"CH3Cl","cas":"74-87-3","conc":"25","altq":"","tox":[4],"date":"1999.12.24","url":"https://toxicdms.moenv.gov.tw/Chm/Detail1/078-01"},{"id":"077-02","zh":"1,1-二氯乙烯","en":"1,1-Dichloroethylene","formula":"C2H2Cl2","cas":"75-35-4","conc":"25","altq":"","tox":[4],"date":"1999.12.24","url":"https://toxicdms.moenv.gov.tw/Chm/Detail1/077-02"},{"id":"077-01","zh":"1,2-二氯乙烯","en":"1,2-Dichloroethylene","formula":"ClCH=CHCl","cas":"540-59-0,156-59-2,156-60-5","conc":"25","altq":"","tox":[4],"date":"1999.12.24","url":"https://toxicdms.moenv.gov.tw/Chm/Detail1/077-01"},{"id":"076-01","zh":"1,1,2,2-四氯乙烷","en":"1,1,2,2-Tetrachloroethane","formula":"CHCl2CHCl2","cas":"79-34-5","conc":"1","altq":"","tox":[4],"date":"1999.12.24","url":"https://toxicdms.moenv.gov.tw/Chm/Detail1/076-01"},{"id":"075-01","zh":"1,2-二氯乙烷","en":"1,2-Dichloroethane (Ethylene dichloride)","formula":"CH2ClCH2Cl","cas":"107-06-2","conc":"15","altq":"","tox":[4],"date":"1999.12.24","url":"https://toxicdms.moenv.gov.tw/Chm/Detail1/075-01"},{"id":"074-01","zh":"二異氰酸甲苯","en":"Toluene diisocyanate (mixed isomers)Toluene-2,4-diisocyanate","formula":"C9H6O2N2, C6H3CH3(NCO)2","cas":"26471-62-5,584-84-9","conc":"1","altq":"500","tox":[3],"date":"1999.12.24","url":"https://toxicdms.moenv.gov.tw/Chm/Detail1/074-01"},{"id":"073-01","zh":"鄰苯二甲酐","en":"Phthalic anhydride","formula":"C6H4(CO)2O","cas":"85-44-9","conc":"1","altq":"50","tox":[3],"date":"1999.12.24","url":"https://toxicdms.moenv.gov.tw/Chm/Detail1/073-01"},{"id":"072-01","zh":"環氧氯丙烷","en":"Epichlorohydrin (1-Chloro-2,3-epoxypropane)","formula":"OCH2CHCH2Cl","cas":"106-89-8","conc":"1","altq":"50","tox":[2],"date":"1999.12.24","url":"https://toxicdms.moenv.gov.tw/Chm/Detail1/072-01"},{"id":"071-02","zh":"乙二醇甲醚","en":"2-Methoxyethanol (Ethylene glycol monomethyl ether)","formula":"CH2OHCH2OCH3","cas":"109-86-4","conc":"1","altq":"50","tox":[2],"date":"1999.12.24","url":"https://toxicdms.moenv.gov.tw/Chm/Detail1/071-02"},{"id":"071-01","zh":"乙二醇乙醚","en":"2-Ethoxyethanol (Ethylene glycol monoethyl ether)","formula":"CH2OHCH2OC2H5","cas":"110-80-5","conc":"1","altq":"50","tox":[2],"date":"1999.12.24","url":"https://toxicdms.moenv.gov.tw/Chm/Detail1/071-01"},{"id":"070-01","zh":"1,2,4-三氯苯","en":"1,2,4-Trichlorobenzene","formula":"C6H3Cl3","cas":"120-82-1","conc":"1","altq":"50","tox":[1],"date":"1999.12.24","url":"https://toxicdms.moenv.gov.tw/Chm/Detail1/070-01"},{"id":"069-02","zh":"鄰-二氯苯","en":"o-Dichlorobenzene (1,2-Dichloro benzene)","formula":"C6H4Cl2","cas":"95-50-1","conc":"1","altq":"50","tox":[1],"date":"","url":"https://toxicdms.moenv.gov.tw/Chm/Detail1/069-02"},{"id":"069-01","zh":"1,3-二氯苯","en":"1,3-Dichlorobenzene","formula":"C6H4Cl2","cas":"541-73-1","conc":"1","altq":"50","tox":[1],"date":"1999.12.24","url":"https://toxicdms.moenv.gov.tw/Chm/Detail1/069-01"},{"id":"068-24","zh":"鄰苯二甲酸單丁酯","en":"Mono-n-Butyl phthalate (MNBP)","formula":"C12H14O4","cas":"131-70-4","conc":"10","altq":"","tox":[4],"date":"2011.07.20","url":"https://toxicdms.moenv.gov.tw/Chm/Detail1/068-24"},{"id":"068-23","zh":"鄰苯二甲酸單(2-乙基己基)酯","en":"Mono(2-ethylhexyl) phthalate (MEHP)","formula":"C16H22O4","cas":"4376-20-9","conc":"10","altq":"","tox":[4],"date":"2011.07.20","url":"https://toxicdms.moenv.gov.tw/Chm/Detail1/068-23"},{"id":"068-22","zh":"鄰苯二甲酸二苄酯","en":"Dibenzyl phthalate (DBZP)","formula":"C22H18O4","cas":"523-31-9","conc":"10","altq":"","tox":[4],"date":"2011.07.20","url":"https://toxicdms.moenv.gov.tw/Chm/Detail1/068-22"},{"id":"068-21","zh":"鄰苯二甲酸二苯酯","en":"Diphenyl phthalate (DPP)","formula":"C20H14O4","cas":"84-62-8","conc":"10","altq":"","tox":[4],"date":"2011.07.20","url":"https://toxicdms.moenv.gov.tw/Chm/Detail1/068-21"},{"id":"068-20","zh":"鄰苯二甲酸二丁氧基乙酯","en":"Bis(2-n-butoxyethyl) phthalate (BBEP)","formula":"C20H30O6","cas":"117-83-9","conc":"10","altq":"","tox":[4],"date":"2011.07.20","url":"https://toxicdms.moenv.gov.tw/Chm/Detail1/068-20"},{"id":"068-19","zh":"鄰苯二甲酸己基2-乙基己基酯","en":"Hexyl 2-ethylhexyl phthalate (HEHP)","formula":"C22H34O4","cas":"75673-16-4","conc":"10","altq":"","tox":[4],"date":"2011.07.20","url":"https://toxicdms.moenv.gov.tw/Chm/Detail1/068-19"},{"id":"068-18","zh":"鄰苯二甲酸雙-2-乙氧基乙酯","en":"Bis(2-ethoxyethyl) phthalate (BEEP)","formula":"C16H22O6","cas":"605-54-9","conc":"10","altq":"","tox":[4],"date":"2011.07.20","url":"https://toxicdms.moenv.gov.tw/Chm/Detail1/068-18"},{"id":"068-17","zh":"鄰苯二甲酸二甲氧乙酯","en":"Bis(2-methoxyethyl) phthalate (BMEP)","formula":"C14H18O6","cas":"117-82-8","conc":"10","altq":"","tox":[4],"date":"2011.07.20","url":"https://toxicdms.moenv.gov.tw/Chm/Detail1/068-17"},{"id":"068-16","zh":"鄰苯二甲酸二（4-甲基-2-戊基）酯","en":"Bis(4-methyl-2-pentyl) phthalate (BMPP)","formula":"C20H30O4","cas":"146-50-9","conc":"10","altq":"","tox":[4],"date":"2011.07.20","url":"https://toxicdms.moenv.gov.tw/Chm/Detail1/068-16"},{"id":"068-15","zh":"鄰苯二甲酸二正壬酯","en":"Di-n-nonyl phthalate (DNP)","formula":"C26H42O4","cas":"84-76-4","conc":"10","altq":"","tox":[4],"date":"2011.07.20","url":"https://toxicdms.moenv.gov.tw/Chm/Detail1/068-15"},{"id":"068-14","zh":"鄰苯二甲酸二異辛酯","en":"Di-iso-octyl Phthalate (DIOP)","formula":"C24H38O4","cas":"27554-26-3","conc":"10","altq":"","tox":[4],"date":"2011.07.20","url":"https://toxicdms.moenv.gov.tw/Chm/Detail1/068-14"},{"id":"068-13","zh":"鄰苯二甲酸二環己酯","en":"Dicyclohexyl Phthalate (DCHP)","formula":"C20H26O4","cas":"84-61-7","conc":"10","altq":"","tox":[4],"date":"2011.07.20","url":"https://toxicdms.moenv.gov.tw/Chm/Detail1/068-13"},{"id":"068-12","zh":"鄰苯二甲酸二己酯","en":"Di-n-hexyl Phthalate (DNHP)","formula":"C20H30O4","cas":"84-75-3","conc":"10","altq":"","tox":[4],"date":"2011.07.20","url":"https://toxicdms.moenv.gov.tw/Chm/Detail1/068-12"},{"id":"068-11","zh":"鄰苯二甲酸二戊酯","en":"Di-n-pentyl Phthalate (DNPP)","formula":"C18H26O4","cas":"131-18-0","conc":"10","altq":"","tox":[4],"date":"2011.07.20","url":"https://toxicdms.moenv.gov.tw/Chm/Detail1/068-11"},{"id":"068-10","zh":"鄰苯二甲酸二異丁酯","en":"Di-iso-butyl Phthalate (DIBP)","formula":"C16H22O4","cas":"84-69-5","conc":"10","altq":"50","tox":[1,2],"date":"2011.07.20","url":"https://toxicdms.moenv.gov.tw/Chm/Detail1/068-10"},{"id":"068-09","zh":"鄰苯二甲酸二丙酯","en":"Di-n-propyl Phthalate (DPP)","formula":"C14H18O4","cas":"131-16-8","conc":"10","altq":"","tox":[4],"date":"2011.07.20","url":"https://toxicdms.moenv.gov.tw/Chm/Detail1/068-09"},{"id":"068-08","zh":"鄰苯二甲酸二烷基酯（C6-8支鏈及直鏈，富含C7）","en":"1,2-Benzenedicarboxylic acid, di-C6-8-branched alkyl esters, C7-rich (DIHP)","formula":"C22H34O4–C30H50O4","cas":"71888-89-6","conc":"10","altq":"","tox":[4],"date":"2011.07.20","url":"https://toxicdms.moenv.gov.tw/Chm/Detail1/068-08"},{"id":"068-07","zh":"鄰苯二甲酸二烷基酯（C7-11支鏈及直鏈）","en":"1,2-Benzenedicarboxylic acid, di-C7-11-branched and linear alkyl esters (DHNUP)","formula":"C22H34O4–C30H50O4","cas":"68515-42-4","conc":"10","altq":"","tox":[4],"date":"2011.07.20","url":"https://toxicdms.moenv.gov.tw/Chm/Detail1/068-07"},{"id":"068-06","zh":"鄰苯二甲酸二乙酯","en":"Diethyl phthalate (DEP)","formula":"C6H4(COOC2H5)2","cas":"84-66-2","conc":"10","altq":"50","tox":[1],"date":"2011.07.20","url":"https://toxicdms.moenv.gov.tw/Chm/Detail1/068-06"},{"id":"068-05","zh":"鄰苯二甲酸二異癸酯","en":"Di-isodecyl phthalate (DIDP)","formula":"C6H4[COO(CH2)7CH(CH3)2]2","cas":"26761-40-0,68515-49-1","conc":"10","altq":"50","tox":[1],"date":"2011.07.20","url":"https://toxicdms.moenv.gov.tw/Chm/Detail1/068-05"},{"id":"068-04","zh":"鄰苯二甲酸二異壬酯","en":"Di-isononyl phthalate (DINP)","formula":"C26H42O4","cas":"28553-12-0,68515-48-0","conc":"10","altq":"50","tox":[1],"date":"2011.07.20","url":"https://toxicdms.moenv.gov.tw/Chm/Detail1/068-04"},{"id":"068-03","zh":"鄰苯二甲酸丁基苯甲酯","en":"Benzyl butyl phthalate (BBP)","formula":"1,2-C6H4(COOCH2C6H5)(COOC4H9)","cas":"85-68-7","conc":"10","altq":"50","tox":[1,2],"date":"2011.07.20","url":"https://toxicdms.moenv.gov.tw/Chm/Detail1/068-03"},{"id":"068-02","zh":"鄰苯二甲酸二辛酯","en":"Di-n-octyl phthalate (DNOP)","formula":"C6H4(COOC8H17)2","cas":"117-84-0","conc":"10","altq":"50","tox":[1],"date":"2006.12.29","url":"https://toxicdms.moenv.gov.tw/Chm/Detail1/068-02"},{"id":"068-01","zh":"鄰苯二甲酸二(2-乙基己基)酯","en":"Di(2-ethylhexyl)phthalate (DEHP)","formula":"C6H4[COOCH2CH(C2H5)C4H9]2","cas":"117-81-7","conc":"10","altq":"50","tox":[1,2],"date":"1999.12.24","url":"https://toxicdms.moenv.gov.tw/Chm/Detail1/068-01"},{"id":"067-01","zh":"4,4\u0027-亞甲雙(2-氯苯胺)","en":"4,4\u0027-Methylenebis(2-chloroaniline)","formula":"CH2(C6H4ClNH2)2","cas":"101-14-4","conc":"1","altq":"500","tox":[1,2],"date":"1999.12.24","url":"https://toxicdms.moenv.gov.tw/Chm/Detail1/067-01"},{"id":"066-01","zh":"甲醛","en":"Formaldehyde","formula":"HCHO","cas":"50-00-0","conc":"15","altq":"50","tox":[2,3],"date":"1999.12.24","url":"https://toxicdms.moenv.gov.tw/Chm/Detail1/066-01"},{"id":"065-01","zh":"氯乙烯","en":"Vinyl Chloride","formula":"CH2CHCl","cas":"75-01-4","conc":"50","altq":"50","tox":[2],"date":"1999.12.24","url":"https://toxicdms.moenv.gov.tw/Chm/Detail1/065-01"},{"id":"064-01","zh":"三氯乙烯","en":"Trichloroethylene","formula":"CHClCCl2","cas":"79-01-6","conc":"10","altq":"50","tox":[1,2],"date":"1999.12.24","url":"https://toxicdms.moenv.gov.tw/Chm/Detail1/064-01"},{"id":"063-01","zh":"四氯乙烯","en":"Tetrachloroethylene","formula":"CCl2CCl2","cas":"127-18-4","conc":"10","altq":"350","tox":[1,2],"date":"1999.12.24","url":"https://toxicdms.moenv.gov.tw/Chm/Detail1/063-01"},{"id":"062-01","zh":"1,3-丁二烯","en":"1,3-Butadiene","formula":"CH2CHCHCH2","cas":"106-99-0","conc":"50","altq":"50","tox":[2],"date":"1999.12.24","url":"https://toxicdms.moenv.gov.tw/Chm/Detail1/062-01"},{"id":"061-01","zh":"環氧乙烷","en":"Ethylene oxide","formula":"C2H4O","cas":"75-21-8","conc":"1","altq":"50","tox":[1,2],"date":"1997.04.25","url":"https://toxicdms.moenv.gov.tw/Chm/Detail1/061-01"},{"id":"060-01","zh":"二溴乙烷(二溴乙烯)","en":"Ethylene dibromide","formula":"C2H4Br2","cas":"106-93-4","conc":"10","altq":"50","tox":[1,2],"date":"1997.04.25","url":"https://toxicdms.moenv.gov.tw/Chm/Detail1/060-01"},{"id":"059-01","zh":"次硫化鎳","en":"Trinickel disulfide","formula":"Ni3S2","cas":"12035-72-2","conc":"1","altq":"50","tox":[2],"date":"1997.04.25","url":"https://toxicdms.moenv.gov.tw/Chm/Detail1/059-01"},{"id":"058-01","zh":"六氯苯","en":"Hexachlorobenzene","formula":"C6Cl6","cas":"118-74-1","conc":"1","altq":"50","tox":[1],"date":"1993.12.24","url":"https://toxicdms.moenv.gov.tw/Chm/Detail1/058-01"},{"id":"057-01","zh":"氯甲基甲基醚","en":"Chloromethyl methyl ether","formula":"CH2ClOCH3","cas":"107-30-2","conc":"1","altq":"50","tox":[1,2,3],"date":"1993.12.24","url":"https://toxicdms.moenv.gov.tw/Chm/Detail1/057-01"},{"id":"056-02","zh":"2,4,5 三氯酚","en":"2,4,5-Trichlorophenol","formula":"C6H2Cl3OH","cas":"95-95-4","conc":"1","altq":"50","tox":[1,2],"date":"1993.12.24","url":"https://toxicdms.moenv.gov.tw/Chm/Detail1/056-02"},{"id":"056-01","zh":"2,4,6-三氯酚","en":"2,4,6-Trichlorophenol","formula":"C6H2Cl3OH","cas":"88-06-2","conc":"1","altq":"50","tox":[1,2],"date":"1993.12.24","url":"https://toxicdms.moenv.gov.tw/Chm/Detail1/056-01"},{"id":"055-27","zh":"硫鉻酸鉛","en":"Lead sulfochromate yellow (C.I. Pigment Yellow 34)","formula":"Pb (Cr,S) O4","cas":"1344-37-2","conc":"1","altq":"500","tox":[2],"date":"2013.01.24","url":"https://toxicdms.moenv.gov.tw/Chm/Detail1/055-27"},{"id":"055-26","zh":"鉬鉻紅","en":"Lead chromate molybdate sulphate red (C.I. Pigment Red 104)","formula":"Pb(Cr,Mo,S)O4","cas":"12656-85-8","conc":"1","altq":"500","tox":[2],"date":"2013.01.24","url":"https://toxicdms.moenv.gov.tw/Chm/Detail1/055-26"},{"id":"055-25","zh":"鉻化砷酸銅","en":"Chromated Copper Arsenate","formula":"","cas":"37337-13-6","conc":"1","altq":"500","tox":[2],"date":"2005.12.30","url":"https://toxicdms.moenv.gov.tw/Chm/Detail1/055-25"},{"id":"055-24","zh":"六羰鉻","en":"Chromium carbonyl","formula":"Cr(CO)6","cas":"13007-92-6","conc":"1","altq":"500","tox":[2],"date":"1996.05.31","url":"https://toxicdms.moenv.gov.tw/Chm/Detail1/055-24"},{"id":"055-23","zh":"鉻酸鋅(鉻酸鋅氫氧化合物)","en":"Zinc chromate (Zinc chromate hydroxide)","formula":"ZnCrO4, Zn2CrO4(OH)2","cas":"13530-65-9","conc":"1","altq":"500","tox":[2],"date":"1996.05.31","url":"https://toxicdms.moenv.gov.tw/Chm/Detail1/055-23"},{"id":"055-22","zh":"鉻酸鍶","en":"Strontium chromate","formula":"SrCrO4","cas":"7789-06-2","conc":"1","altq":"500","tox":[2],"date":"1996.05.31","url":"https://toxicdms.moenv.gov.tw/Chm/Detail1/055-22"},{"id":"055-21","zh":"鉻酸錫","en":"Stannic chromate","formula":"Sn(CrO4)2","cas":"38455-77-5","conc":"1","altq":"500","tox":[2],"date":"1996.05.31","url":"https://toxicdms.moenv.gov.tw/Chm/Detail1/055-21"},{"id":"055-20","zh":"鉻酸鈉","en":"Sodium chromate","formula":"Na2CrO4","cas":"7775-11-3","conc":"1","altq":"500","tox":[2],"date":"1996.05.31","url":"https://toxicdms.moenv.gov.tw/Chm/Detail1/055-20"},{"id":"055-19","zh":"鉻酸銀","en":"Silver chromate","formula":"Ag2CrO4","cas":"7784-01-2","conc":"1","altq":"500","tox":[2],"date":"1996.05.31","url":"https://toxicdms.moenv.gov.tw/Chm/Detail1/055-19"},{"id":"055-18","zh":"鉻酸鉀","en":"Potassium chromate","formula":"K2CrO4","cas":"7789-00-6","conc":"1","altq":"500","tox":[2],"date":"1996.05.31","url":"https://toxicdms.moenv.gov.tw/Chm/Detail1/055-18"},{"id":"055-17","zh":"鉻酸鋰","en":"Lithium chromate","formula":"Li2CrO4","cas":"14307-35-8","conc":"1","altq":"500","tox":[2],"date":"1996.05.31","url":"https://toxicdms.moenv.gov.tw/Chm/Detail1/055-17"},{"id":"055-16","zh":"鉻酸氧鉛","en":"Lead chromate oxide","formula":"Pb2(CrO4)O","cas":"18454-12-1","conc":"1","altq":"500","tox":[2],"date":"1996.05.31","url":"https://toxicdms.moenv.gov.tw/Chm/Detail1/055-16"},{"id":"055-15","zh":"鉻酸鉛","en":"Lead chromate","formula":"PbCrO4","cas":"7758-97-6","conc":"1","altq":"500","tox":[2],"date":"1996.05.31","url":"https://toxicdms.moenv.gov.tw/Chm/Detail1/055-15"},{"id":"055-14","zh":"鉻酸鐵","en":"Ferric chromate","formula":"Fe2 (CrO4)3","cas":"10294-52-7","conc":"1","altq":"500","tox":[2],"date":"1996.05.31","url":"https://toxicdms.moenv.gov.tw/Chm/Detail1/055-14"},{"id":"055-13","zh":"鉻酸銅","en":"Cupric chromate","formula":"CuCrO4","cas":"13548-42-0","conc":"1","altq":"500","tox":[2],"date":"1996.05.31","url":"https://toxicdms.moenv.gov.tw/Chm/Detail1/055-13"},{"id":"055-12","zh":"鉻酸鈣","en":"Calcium chromate","formula":"CaCrO4","cas":"13765-19-0","conc":"1","altq":"500","tox":[2],"date":"1996.05.31","url":"https://toxicdms.moenv.gov.tw/Chm/Detail1/055-12"},{"id":"055-11","zh":"鉻酸鋇","en":"Barium chromate","formula":"BaCrO4","cas":"10294-40-3","conc":"1","altq":"500","tox":[2],"date":"1996.05.31","url":"https://toxicdms.moenv.gov.tw/Chm/Detail1/055-11"},{"id":"055-10","zh":"鉻酸銨","en":"Ammonium chromate","formula":"(NH4)2CrO4","cas":"7788-98-9","conc":"1","altq":"500","tox":[2],"date":"1996.05.31","url":"https://toxicdms.moenv.gov.tw/Chm/Detail1/055-10"},{"id":"055-09","zh":"重鉻酸鋅","en":"Zinc dichromate","formula":"ZnCr2O2","cas":"14018-95-2","conc":"1","altq":"500","tox":[2],"date":"1996.05.31","url":"https://toxicdms.moenv.gov.tw/Chm/Detail1/055-09"},{"id":"055-08","zh":"重鉻酸汞","en":"Mercuric dichromate","formula":"HgCr2O7","cas":"7789-10-8","conc":"1","altq":"500","tox":[2],"date":"1996.05.31","url":"https://toxicdms.moenv.gov.tw/Chm/Detail1/055-08"},{"id":"055-07","zh":"重鉻酸鋰","en":"Lithium dichromate","formula":"Li2Cr2O7","cas":"13843-81-7","conc":"1","altq":"500","tox":[2],"date":"1996.05.31","url":"https://toxicdms.moenv.gov.tw/Chm/Detail1/055-07"},{"id":"055-06","zh":"重鉻酸銅","en":"Cupric dichromate","formula":"CuCr2O7","cas":"13675-47-3","conc":"1","altq":"500","tox":[2],"date":"1996.05.31","url":"https://toxicdms.moenv.gov.tw/Chm/Detail1/055-06"},{"id":"055-05","zh":"重鉻酸鈣","en":"Calcium dichromate","formula":"CaCr2O7","cas":"14307-33-6","conc":"1","altq":"500","tox":[2],"date":"1996.05.31","url":"https://toxicdms.moenv.gov.tw/Chm/Detail1/055-05"},{"id":"055-04","zh":"重鉻酸銨","en":"Ammonium dichromate","formula":"(NH4)2Cr2O7","cas":"7789-09-5","conc":"1","altq":"500","tox":[2],"date":"1996.05.31","url":"https://toxicdms.moenv.gov.tw/Chm/Detail1/055-04"},{"id":"055-03","zh":"重鉻酸鈉","en":"Sodium dichromate","formula":"Na2Cr2O7.2H2O, Na2Cr2O7","cas":"7789-12-0,10588-01-9","conc":"1","altq":"500","tox":[2],"date":"1993.12.24","url":"https://toxicdms.moenv.gov.tw/Chm/Detail1/055-03"},{"id":"055-02","zh":"重鉻酸鉀","en":"Potassium dichromate","formula":"K2Cr2O7","cas":"7778-50-9","conc":"1","altq":"500","tox":[2],"date":"1993.12.24","url":"https://toxicdms.moenv.gov.tw/Chm/Detail1/055-02"},{"id":"055-01","zh":"三氧化鉻(鉻酸)","en":"Chromium(VI) trioxide","formula":"CrO3","cas":"1333-82-0","conc":"1","altq":"500","tox":[2],"date":"1993.12.24","url":"https://toxicdms.moenv.gov.tw/Chm/Detail1/055-01"},{"id":"054-01","zh":"三氯甲烷","en":"Chloroform","formula":"CHCl3","cas":"67-66-3","conc":"50","altq":"50","tox":[1],"date":"1993.12.24","url":"https://toxicdms.moenv.gov.tw/Chm/Detail1/054-01"},{"id":"053-01","zh":"四氯化碳","en":"Carbon tetrachloride","formula":"CCl4","cas":"56-23-5","conc":"50","altq":"50","tox":[1],"date":"1993.12.24","url":"https://toxicdms.moenv.gov.tw/Chm/Detail1/053-01"},{"id":"052-01","zh":"苯","en":"Benzene","formula":"C6H6","cas":"71-43-2","conc":"70","altq":"50","tox":[1,2],"date":"1993.12.24","url":"https://toxicdms.moenv.gov.tw/Chm/Detail1/052-01"},{"id":"051-01","zh":"丙烯腈","en":"Acrylonitrile","formula":"CH2CHCN","cas":"107-13-1","conc":"50","altq":"50","tox":[1,2],"date":"1993.12.24","url":"https://toxicdms.moenv.gov.tw/Chm/Detail1/051-01"},{"id":"050-01","zh":"丙烯醯胺","en":"Acrylamide","formula":"CH2CHCONH2","cas":"79-06-1","conc":"30","altq":"50","tox":[2,3],"date":"1993.12.24","url":"https://toxicdms.moenv.gov.tw/Chm/Detail1/050-01"},{"id":"049-01","zh":"氯","en":"Chlorine","formula":"Cl2","cas":"7782-50-5","conc":"1","altq":"50","tox":[3],"date":"1992.08.08","url":"https://toxicdms.moenv.gov.tw/Chm/Detail1/049-01"},{"id":"048-01","zh":"異氰酸甲酯","en":"Methyl isocyanate","formula":"CH3OCN","cas":"624-83-9","conc":"1","altq":"5","tox":[3],"date":"1992.08.08","url":"https://toxicdms.moenv.gov.tw/Chm/Detail1/048-01"},{"id":"047-01","zh":"光氣","en":"Phosgene","formula":"COCl2","cas":"75-44-5","conc":"1","altq":"5","tox":[1,3],"date":"1992.08.08","url":"https://toxicdms.moenv.gov.tw/Chm/Detail1/047-01"},{"id":"046-09","zh":"氰化銅鈉","en":"Copper Sodium cyanide","formula":"NaCu(CN)3","cas":"14264-31-4","conc":"1","altq":"500","tox":[3],"date":"1993.12.24","url":"https://toxicdms.moenv.gov.tw/Chm/Detail1/046-09"},{"id":"046-08","zh":"氰化銅","en":"Copper(II) cyanide","formula":"Cu(CN)2","cas":"14763-77-0","conc":"1","altq":"500","tox":[3],"date":"1992.08.13","url":"https://toxicdms.moenv.gov.tw/Chm/Detail1/046-08"},{"id":"046-07","zh":"氰化鋅","en":"Zinc cyanide","formula":"Zn(CN)2","cas":"557-21-1","conc":"1","altq":"500","tox":[3],"date":"1992.08.12","url":"https://toxicdms.moenv.gov.tw/Chm/Detail1/046-07"},{"id":"046-06","zh":"氰化鎘","en":"Cadmium cyanide","formula":"Cd(CN)2","cas":"542-83-6","conc":"1","altq":"500","tox":[3],"date":"1992.08.11","url":"https://toxicdms.moenv.gov.tw/Chm/Detail1/046-06"},{"id":"046-05","zh":"氰化鉀銅","en":"Copper(I) potassium cyanide","formula":"KCu(CN)2","cas":"13682-73-0","conc":"1","altq":"500","tox":[3],"date":"1992.08.10","url":"https://toxicdms.moenv.gov.tw/Chm/Detail1/046-05"},{"id":"046-04","zh":"氰化亞銅","en":"Copper(I) cyanide","formula":"CuCN","cas":"544-92-3","conc":"1","altq":"500","tox":[3],"date":"1992.08.09","url":"https://toxicdms.moenv.gov.tw/Chm/Detail1/046-04"},{"id":"046-03","zh":"氰化銀","en":"Silver cyanide","formula":"AgCN","cas":"506-64-9","conc":"1","altq":"500","tox":[3],"date":"1992.08.08","url":"https://toxicdms.moenv.gov.tw/Chm/Detail1/046-03"},{"id":"046-02","zh":"氰化鉀","en":"Potassium cyanide","formula":"KCN","cas":"151-50-8","conc":"1","altq":"500","tox":[3],"date":"1992.08.08","url":"https://toxicdms.moenv.gov.tw/Chm/Detail1/046-02"},{"id":"046-01","zh":"氰化鈉","en":"Sodium cyanide","formula":"NaCN","cas":"143-33-9","conc":"1","altq":"500","tox":[3],"date":"1992.08.08","url":"https://toxicdms.moenv.gov.tw/Chm/Detail1/046-01"},{"id":"045-02","zh":"五氧化二砷","en":"Arsenic pentoxide","formula":"As2O5","cas":"1303-28-2","conc":"1","altq":"50","tox":[2,3],"date":"2013.01.24","url":"https://toxicdms.moenv.gov.tw/Chm/Detail1/045-02"},{"id":"045-01","zh":"三氧化二砷","en":"Arsenic trioxide","formula":"As2O3","cas":"1327-53-3","conc":"1","altq":"50","tox":[1,2,3],"date":"1992.08.08","url":"https://toxicdms.moenv.gov.tw/Chm/Detail1/045-01"},{"id":"044-01","zh":"三氯甲苯","en":"Trichloromethyl benzene","formula":"CCl3C6H5","cas":"98-07-7","conc":"1","altq":"50","tox":[1,3],"date":"1992.08.08","url":"https://toxicdms.moenv.gov.tw/Chm/Detail1/044-01"},{"id":"043-01","zh":"鄰-二甲基聯苯胺","en":"3,3’-Dimethyl-[1,1’-biphenyl]-4,4’-diamine","formula":"(NH2CH3C6H3)2","cas":"119-93-7","conc":"1","altq":"50","tox":[1],"date":"1992.08.08","url":"https://toxicdms.moenv.gov.tw/Chm/Detail1/043-01"},{"id":"042-01","zh":"二氯聯苯胺","en":"3,3’-Dichlorobenzidine","formula":"(NH2ClC5H3)2","cas":"91-94-1","conc":"1","altq":"50","tox":[1,2],"date":"1992.08.08","url":"https://toxicdms.moenv.gov.tw/Chm/Detail1/042-01"},{"id":"041-01","zh":"二甲氧基聯苯胺","en":"3,3’-Dimethoxybenzidine","formula":"(NH2C6H3)2‧(CH3O)2","cas":"119-90-4","conc":"1","altq":"50","tox":[1],"date":"1992.08.08","url":"https://toxicdms.moenv.gov.tw/Chm/Detail1/041-01"},{"id":"040-01","zh":"1-萘胺","en":"1-Naphthylamine","formula":"C10H7NH2","cas":"134-32-7","conc":"1","altq":"50","tox":[1],"date":"1992.08.08","url":"https://toxicdms.moenv.gov.tw/Chm/Detail1/040-01"},{"id":"039-03","zh":"對-甲苯胺","en":"p-Aminotoluene","formula":"CH3C6H4NH2","cas":"106-49-0","conc":"1","altq":"50","tox":[1],"date":"1992.08.08","url":"https://toxicdms.moenv.gov.tw/Chm/Detail1/039-03"},{"id":"039-02","zh":"間-甲苯胺","en":"m-Aminotoluene","formula":"CH3C6H4NH2","cas":"108-44-1","conc":"1","altq":"50","tox":[1],"date":"1992.08.08","url":"https://toxicdms.moenv.gov.tw/Chm/Detail1/039-02"},{"id":"039-01","zh":"鄰-甲苯胺","en":"o-Aminotoluene","formula":"CH3C6H4NH2","cas":"95-53-4","conc":"1","altq":"50","tox":[1],"date":"1992.08.08","url":"https://toxicdms.moenv.gov.tw/Chm/Detail1/039-01"},{"id":"038-01","zh":"苯胺","en":"Aniline","formula":"C6H5NH2","cas":"62-53-3","conc":"1","altq":"50","tox":[3],"date":"1992.08.08","url":"https://toxicdms.moenv.gov.tw/Chm/Detail1/038-01"},{"id":"037-07","zh":"氯化鎘","en":"Cadmium chloride","formula":"CdCl2","cas":"10108-64-2","conc":"1","altq":"500","tox":[2,3],"date":"1992.08.08","url":"https://toxicdms.moenv.gov.tw/Chm/Detail1/037-07"},{"id":"037-06","zh":"硝酸鎘","en":"Cadmium nitrate","formula":"Cd(NO3)2","cas":"10325-94-7","conc":"1","altq":"500","tox":[2,3],"date":"1992.08.08","url":"https://toxicdms.moenv.gov.tw/Chm/Detail1/037-06"},{"id":"037-05","zh":"硫酸鎘","en":"Cadmium sulfate","formula":"CdSO4","cas":"10124-36-4","conc":"1","altq":"500","tox":[2,3],"date":"1992.08.08","url":"https://toxicdms.moenv.gov.tw/Chm/Detail1/037-05"},{"id":"037-04","zh":"硫化鎘","en":"Cadmium sulfide","formula":"CdS","cas":"1306-23-6","conc":"1","altq":"500","tox":[2,3],"date":"1992.08.08","url":"https://toxicdms.moenv.gov.tw/Chm/Detail1/037-04"},{"id":"037-03","zh":"碳酸鎘","en":"Cadmium carbonate","formula":"CdCO3","cas":"513-78-0","conc":"1","altq":"500","tox":[2,3],"date":"1992.08.08","url":"https://toxicdms.moenv.gov.tw/Chm/Detail1/037-03"},{"id":"037-02","zh":"氧化鎘","en":"Cadmium oxide","formula":"CdO","cas":"1306-19-0","conc":"1","altq":"500","tox":[2,3],"date":"1992.08.08","url":"https://toxicdms.moenv.gov.tw/Chm/Detail1/037-02"},{"id":"037-01","zh":"鎘","en":"Cadmium","formula":"Cd","cas":"7440-43-9","conc":"95","altq":"500","tox":[2,3],"date":"1992.08.08","url":"https://toxicdms.moenv.gov.tw/Chm/Detail1/037-01"},{"id":"036-08","zh":"聯苯胺二過氯酸鹽","en":"Benzidine diperchlorate","formula":"(NH2C6H4)2‧2HClO4","cas":"41195-21-5","conc":"1","altq":"50","tox":[2],"date":"1992.08.08","url":"https://toxicdms.moenv.gov.tw/Chm/Detail1/036-08"},{"id":"036-07","zh":"聯苯胺過氯酸鹽(二)","en":"Benzidine perchlorate","formula":"(NH2C6H4)2‧XHClO4","cas":"38668-12-1","conc":"1","altq":"50","tox":[2],"date":"1992.08.08","url":"https://toxicdms.moenv.gov.tw/Chm/Detail1/036-07"},{"id":"036-06","zh":"聯苯胺過氯酸鹽(一)","en":"Benzidine perchlorate","formula":"(NH2C6H4)2‧HClO4","cas":"29806-76-6","conc":"1","altq":"50","tox":[2],"date":"1992.08.08","url":"https://toxicdms.moenv.gov.tw/Chm/Detail1/036-06"},{"id":"036-05","zh":"聯苯胺二氫氟酸鹽","en":"Benzidine dihydrofluoride","formula":"(NH2C6H4)2‧2HF","cas":"41766-73-8","conc":"1","altq":"50","tox":[2],"date":"1992.08.08","url":"https://toxicdms.moenv.gov.tw/Chm/Detail1/036-05"},{"id":"036-04","zh":"聯苯胺二鹽酸鹽","en":"Benzidine dihydrochloride","formula":"(NH2C6H4)2‧2HCl","cas":"531-85-1","conc":"1","altq":"50","tox":[2],"date":"1992.08.08","url":"https://toxicdms.moenv.gov.tw/Chm/Detail1/036-04"},{"id":"036-03","zh":"聯苯胺硫酸鹽","en":"Benzidine sulfate","formula":"(NH2C6H4)2‧H2SO4","cas":"531-86-2","conc":"1","altq":"50","tox":[2],"date":"1992.08.08","url":"https://toxicdms.moenv.gov.tw/Chm/Detail1/036-03"},{"id":"036-02","zh":"聯苯胺醋酸鹽","en":"Benzidine acetate","formula":"(NH2C6H4)2‧CH3COOH","cas":"36341-27-2","conc":"1","altq":"50","tox":[2],"date":"1992.08.08","url":"https://toxicdms.moenv.gov.tw/Chm/Detail1/036-02"},{"id":"036-01","zh":"聯苯胺","en":"Benzidine","formula":"(NH2C6H4)2","cas":"92-87-5","conc":"1","altq":"50","tox":[2],"date":"1992.08.08","url":"https://toxicdms.moenv.gov.tw/Chm/Detail1/036-01"},{"id":"035-03","zh":"2-萘胺鹽酸鹽","en":"2-Naphthylamine Hydrochloride","formula":"C10H7NH2‧HCl","cas":"612-52-2","conc":"1","altq":"50","tox":[1,2],"date":"1992.08.08","url":"https://toxicdms.moenv.gov.tw/Chm/Detail1/035-03"},{"id":"035-02","zh":"2-萘胺醋酸鹽","en":"2-Naphthylamine acetate","formula":"C10H7NH2‧CH3COOH","cas":"553-00-4","conc":"1","altq":"50","tox":[1,2],"date":"1992.08.08","url":"https://toxicdms.moenv.gov.tw/Chm/Detail1/035-02"},{"id":"035-01","zh":"2-萘胺","en":"2-Naphthylamine","formula":"C10H7NH2","cas":"91-59-8","conc":"1","altq":"50","tox":[1,2],"date":"1992.08.08","url":"https://toxicdms.moenv.gov.tw/Chm/Detail1/035-01"},{"id":"034-02","zh":"對-胺基聯苯鹽酸鹽","en":"P-Aminobiphenyl Hydrochloride","formula":"C6H5C6H4NH2‧HCl","cas":"2113-61-3","conc":"1","altq":"50","tox":[2],"date":"1992.08.08","url":"https://toxicdms.moenv.gov.tw/Chm/Detail1/034-02"},{"id":"034-01","zh":"對-胺基聯苯","en":"P-Aminobiphenyl","formula":"C6H5C6H4NH2","cas":"92-67-1","conc":"1","altq":"50","tox":[2],"date":"1992.08.08","url":"https://toxicdms.moenv.gov.tw/Chm/Detail1/034-01"},{"id":"033-01","zh":"對-硝基聯苯","en":"P-Nitrobiphenyl","formula":"C6H5C6H4NO2","cas":"92-93-3","conc":"1","altq":"50","tox":[1,2],"date":"1992.08.08","url":"https://toxicdms.moenv.gov.tw/Chm/Detail1/033-01"},{"id":"032-01","zh":"二氯甲醚","en":"Bis-Chloromethyl ether","formula":"(CH2Cl)2O","cas":"542-88-1","conc":"1","altq":"50","tox":[2,3],"date":"1992.08.08","url":"https://toxicdms.moenv.gov.tw/Chm/Detail1/032-01"},{"id":"031-01","zh":"α-氰溴甲苯","en":"α -Bromobenzyl cyanide","formula":"C6H5CHBrCN","cas":"5798-79-8","conc":"1","altq":"50","tox":[3],"date":"1992.08.08","url":"https://toxicdms.moenv.gov.tw/Chm/Detail1/031-01"},{"id":"030-01","zh":"錫蟎丹","en":"Cyhexatin","formula":"(C6H11)3SnOH","cas":"13121-70-5","conc":"1","altq":"50","tox":[3],"date":"1991.12.07","url":"https://toxicdms.moenv.gov.tw/Chm/Detail1/030-01"},{"id":"029-01","zh":"福爾培","en":"Folpet","formula":"C9H4Cl3NO2S","cas":"133-07-3","conc":"1","altq":"50","tox":[3],"date":"1991.12.07","url":"https://toxicdms.moenv.gov.tw/Chm/Detail1/029-01"},{"id":"028-01","zh":"蓋普丹","en":"Captan","formula":"C9H8Cl3NO2S","cas":"133-06-2","conc":"1","altq":"50","tox":[1,3],"date":"1991.12.07","url":"https://toxicdms.moenv.gov.tw/Chm/Detail1/028-01"},{"id":"027-01","zh":"四氯丹","en":"Captafol","formula":"C10H9Cl4NO2S","cas":"2425-06-1","conc":"1","altq":"50","tox":[2,3],"date":"1991.12.07","url":"https://toxicdms.moenv.gov.tw/Chm/Detail1/027-01"},{"id":"026-01","zh":"樂乃松","en":"Fenchlorphos","formula":"C8H8Cl3O3PS","cas":"299-84-3","conc":"1","altq":"50","tox":[1],"date":"1991.12.07","url":"https://toxicdms.moenv.gov.tw/Chm/Detail1/026-01"},{"id":"025-01","zh":"氰乃淨","en":"Cyanazine","formula":"C9H13ClN6","cas":"21725-46-2","conc":"1","altq":"50","tox":[2],"date":"1991.12.07","url":"https://toxicdms.moenv.gov.tw/Chm/Detail1/025-01"},{"id":"024-01","zh":"亞拉生長素","en":"Daminozide","formula":"(CH3)2NNHCOCH2CH","cas":"1596-84-5","conc":"1","altq":"50","tox":[1],"date":"1991.12.07","url":"https://toxicdms.moenv.gov.tw/Chm/Detail1/024-01"},{"id":"023-01","zh":"五氯硝苯","en":"Pentachloronitrobenzene","formula":"C6Cl5NO2","cas":"82-68-8","conc":"1","altq":"50","tox":[1],"date":"1991.12.07","url":"https://toxicdms.moenv.gov.tw/Chm/Detail1/023-01"},{"id":"022-01","zh":"汞","en":"Mercury","formula":"Hg","cas":"7439-97-6","conc":"95","altq":"50","tox":[1],"date":"1991.12.07","url":"https://toxicdms.moenv.gov.tw/Chm/Detail1/022-01"},{"id":"019-01","zh":"靈丹","en":"Lindane (γ-BHC, or γ-HCH)","formula":"C6H6Cl6","cas":"58-89-9","conc":"1","altq":"50","tox":[1,3],"date":"1989.05.02","url":"https://toxicdms.moenv.gov.tw/Chm/Detail1/019-01"},{"id":"018-01","zh":"達諾殺","en":"Dinoseb","formula":"C6H2(NO2)2(C4H9)OH","cas":"88-85-7","conc":"1","altq":"50","tox":[1,3],"date":"1989.05.02","url":"https://toxicdms.moenv.gov.tw/Chm/Detail1/018-01"},{"id":"017-01","zh":"護谷","en":"Nitrofen","formula":"C12H7Cl2NO3","cas":"1836-75-5","conc":"1","altq":"50","tox":[2],"date":"1989.05.02","url":"https://toxicdms.moenv.gov.tw/Chm/Detail1/017-01"},{"id":"016-01","zh":"克氯苯","en":"Chlorobenzilate","formula":"C16H14Cl2O3","cas":"510-15-6","conc":"1","altq":"50","tox":[1,3],"date":"1989.05.02","url":"https://toxicdms.moenv.gov.tw/Chm/Detail1/016-01"},{"id":"015-01","zh":"福賜松","en":"Leptophos","formula":"C6H5PS(OCH3)OC6H2","cas":"21609-90-5","conc":"1","altq":"50","tox":[1,3],"date":"1989.05.02","url":"https://toxicdms.moenv.gov.tw/Chm/Detail1/015-01"},{"id":"014-01","zh":"二溴氯丙烷","en":"1,2-Dibromo-3-chloropropane (DBCP)","formula":"CH2BrCHBrCH2Cl","cas":"96-12-8","conc":"1","altq":"50","tox":[1,2,3],"date":"1989.05.02","url":"https://toxicdms.moenv.gov.tw/Chm/Detail1/014-01"},{"id":"013-01","zh":"阿特靈","en":"Aldrin","formula":"C12H8Cl6","cas":"309-00-2","conc":"1","altq":"50","tox":[1,3],"date":"1989.05.02","url":"https://toxicdms.moenv.gov.tw/Chm/Detail1/013-01"},{"id":"012-01","zh":"蟲必死","en":"Hexachlorocyclohexane","formula":"C6H6Cl6","cas":"319-84-6,319-85-7,319-86-8,6108-10-7","conc":"1","altq":"50","tox":[1,3],"date":"1989.05.02","url":"https://toxicdms.moenv.gov.tw/Chm/Detail1/012-01"},{"id":"011-01","zh":"飛佈達","en":"Heptachlor","formula":"C10H5Cl7","cas":"76-44-8","conc":"1","altq":"50","tox":[1,3],"date":"1989.05.02","url":"https://toxicdms.moenv.gov.tw/Chm/Detail1/011-01"},{"id":"010-01","zh":"安特靈","en":"Endrin","formula":"C12H8Cl6O","cas":"72-20-8","conc":"1","altq":"50","tox":[1,3],"date":"1989.05.02","url":"https://toxicdms.moenv.gov.tw/Chm/Detail1/010-01"},{"id":"009-01","zh":"甲基汞","en":"Methylmercury","formula":"CH3Hg","cas":"22967-92-6","conc":"1","altq":"50","tox":[1],"date":"1989.05.02","url":"https://toxicdms.moenv.gov.tw/Chm/Detail1/009-01"},{"id":"008-01","zh":"五氯酚鈉","en":"Sodium pentachlorophenate","formula":"C6HCl5ONa","cas":"131-52-2","conc":"0.01","altq":"50","tox":[3],"date":"1989.05.02","url":"https://toxicdms.moenv.gov.tw/Chm/Detail1/008-01"},{"id":"007-02","zh":"月桂酸五氯苯酯","en":"Pentachlorophenyl laurate","formula":"C18H23Cl5O2","cas":"3772-94-9","conc":"0.01","altq":"50","tox":[1,3],"date":"2018.06.28","url":"https://toxicdms.moenv.gov.tw/Chm/Detail1/007-02"},{"id":"007-01","zh":"五氯酚","en":"Pentachlorophenol","formula":"C6HCl5O","cas":"87-86-5","conc":"0.01","altq":"50","tox":[1,3],"date":"1989.05.02","url":"https://toxicdms.moenv.gov.tw/Chm/Detail1/007-01"},{"id":"006-01","zh":"毒殺芬","en":"Toxaphene","formula":"C10H10Cl8","cas":"8001-35-2","conc":"1","altq":"50","tox":[1],"date":"1989.05.02","url":"https://toxicdms.moenv.gov.tw/Chm/Detail1/006-01"},{"id":"005-01","zh":"滴滴涕","en":"4,4-Dichlorodiphenyl-trichloroethane (DDT)","formula":"C14H9Cl5","cas":"50-29-3","conc":"1","altq":"50","tox":[1,3],"date":"1989.05.02","url":"https://toxicdms.moenv.gov.tw/Chm/Detail1/005-01"},{"id":"004-01","zh":"地特靈","en":"Dieldrin","formula":"C12H6Cl6O","cas":"60-57-1","conc":"1","altq":"50","tox":[1,3],"date":"1989.05.02","url":"https://toxicdms.moenv.gov.tw/Chm/Detail1/004-01"},{"id":"003-01","zh":"石綿","en":"Asbestos","formula":"5.5FeO,1.5MgO,8SiO2,H2O","cas":"1332-21-4","conc":"1","altq":"500","tox":[2],"date":"1991.02.27","url":"https://toxicdms.moenv.gov.tw/Chm/Detail1/003-01"},{"id":"002-01","zh":"可氯丹","en":"Chlordane","formula":"C10H6Cl8","cas":"57-74-9","conc":"1","altq":"50","tox":[1,3],"date":"1988.06.24","url":"https://toxicdms.moenv.gov.tw/Chm/Detail1/002-01"},{"id":"001-01","zh":"多氯聯苯","en":"Polychlorinated biphenyls","formula":"C10H10-XCL","cas":"1336-36-3","conc":"0.1","altq":"50","tox":[1,2],"date":"1988.06.22","url":"https://toxicdms.moenv.gov.tw/Chm/Detail1/001-01"}];
+const OFFICIAL_META = {source:"環境部 TOXIC_P_23 公告毒性化學物質及其毒性分類", imported:"2026-06-21"};
+
+/* 若使用者曾匯入更新版，從 localStorage 載入覆蓋內建清單 */
+(function(){
+  try{
+    const s = localStorage.getItem("official_override");
+    if(s){ const a = JSON.parse(s); if(Array.isArray(a)&&a.length){ OFFICIAL.length=0; a.forEach(x=>OFFICIAL.push(x)); OFFICIAL_META.imported="使用者匯入"; } }
+  }catch(e){ console.warn("override load failed",e); }
+})();
+
+/* 將多 CAS 字串拆成陣列 */
+const splitCas = s => (s||"").toString().split(/[,，、;；\s]+/).map(x=>x.trim()).filter(Boolean);
+
+/* 合併：精選詳解(DATA) + 官方完整清單(OFFICIAL)，以 CAS 去重並互相補強 */
+function buildAll(){
+  const richByCas = {};
+  DATA.forEach(c=>{ delete c.official; splitCas(c.cas).forEach(cas=>{ richByCas[cas]=c; }); });
+  const lite = [];
+  OFFICIAL.forEach(o=>{
+    let matched = null;
+    for(const cas of splitCas(o.cas)){ if(richByCas[cas]){ matched = richByCas[cas]; break; } }
+    if(matched){
+      matched.official = o;
+      if((!matched.tox || !matched.tox.length) && o.tox && o.tox.length) matched.tox = o.tox.slice();
+    }else{
+      lite.push({
+        zh:o.zh, en:o.en, alias:"", cas:o.cas, formula:o.formula,
+        tox:o.tox||[], cat:["toxic"], gas:false, water:false,
+        haz:null, qty:null, official:o, isLite:true
+      });
+    }
+  });
+  return DATA.concat(lite);
+}
+
+/* ===== 自動驗證：每張卡片的人工 tox 必須等於官方清單 tox =====
+   目的：日後新增物質時，若手填的毒化物分類與官方不一致(或對非毒化物誤標)，
+   會在瀏覽器主控台(F12 Console)即時警示，避免再次人工填錯。
+   規則：① CAS 命中官方 → 卡片若有 tox，必須與官方完全相同；建議直接留 null 由系統自動帶。
+        ② CAS 未命中官方(非列管毒化物) → 卡片不應有 tox(應為 null，改用 haz 文字描述真正法源)。 */
+function officialToxByCas(cas){
+  for(const c of splitCas(cas)){
+    const o = OFFICIAL.find(x=>splitCas(x.cas).includes(c));
+    if(o) return o.tox||[];
+  }
+  return null; // 不在官方清單
+}
+function validateTox(){
+  const sortJoin = a => (a||[]).slice().map(Number).sort((x,y)=>x-y).join(",");
+  const issues = [];
+  DATA.forEach(c=>{
+    const ot = officialToxByCas(c.cas);
+    const cardSet = (c.tox && c.tox.length) ? sortJoin(c.tox) : null;
+    if(ot){ // 在官方清單
+      if(cardSet !== null && cardSet !== sortJoin(ot)){
+        issues.push(`分類不一致：${c.zh}（CAS ${c.cas}）卡片[${c.tox}] ≠ 官方[${ot}]`);
+      }
+    }else{ // 不在官方清單
+      if(cardSet !== null){
+        issues.push(`非列管毒化物卻標 tox：${c.zh}（CAS ${c.cas}）tox[${c.tox}] → 應改 null，並於 haz 註明真正法源`);
+      }
+    }
+  });
+  if(issues.length){
+    console.warn(`⚠️ 毒化物分類驗證：發現 ${issues.length} 筆問題（請修正 DATA 中對應卡片的 tox）`);
+    issues.forEach(s=>console.warn("   • "+s));
+  }else{
+    console.info(`✅ 毒化物分類驗證通過：${DATA.length} 張卡片之 tox 全部與官方清單一致（命中官方者皆相符、非毒化物者皆未誤標）`);
+  }
+  return issues;
+}
+window.validateTox = validateTox; // 可於 Console 手動執行 validateTox()
+const TOX_VALIDATION = validateTox(); // 載入時自動跑一次
+
+let ALL = buildAll();
+
+/* ===================== 程式邏輯 ===================== */
+const CHIPS = [
+  {key:"all",   label:"全部",          cls:""},
+  {key:"rich",  label:"✅ 含現場應變",   cls:""},
+  {key:"tech",  label:"🔬 科技廠化學品", cls:""},
+  {key:"toxic", label:"☠️ 列管毒化物(官方)", cls:"tox"},
+  {key:"gas",   label:"💨 氣體",         cls:""},
+  {key:"water", label:"🚱 禁水/遇水反應", cls:"fire"},
+  {key:"oxid",  label:"🔥 氧化劑/反應性", cls:""},
+  {key:"haz",   label:"⚖️ 公共危險物品",  cls:""},
+];
+let activeChip = "all";
+let query = "";
+
+const norm = s => (s||"").toString().toLowerCase().replace(/\s|-/g,"");
+
+function matchChip(c){
+  switch(activeChip){
+    case"all":return true;
+    case"rich":return !c.isLite;
+    case"tech":return (c.cat||[]).includes("tech");
+    case"toxic":return (c.cat||[]).includes("toxic") || (c.tox&&c.tox.length) || !!c.official;
+    case"gas":return c.gas;
+    case"water":return c.water;
+    case"oxid":return (c.cat||[]).includes("oxid");
+    case"haz":return (!!c.haz && c.haz.indexOf("第")===0);
+    default:return true;
+  }
+}
+function matchQuery(c){
+  if(!query) return true;
+  const q = norm(query);
+  const fields = [c.zh,c.en,c.alias,c.cas,c.un,c.formula, c.official&&c.official.id, c.official&&c.official.formula];
+  return fields.some(f=>f&&norm(f).includes(q));
+}
+
+function hl(text){
+  if(!query) return text;
+  try{
+    const q = query.trim().replace(/[.*+?^${}()|[\]\\]/g,"\\$&");
+    if(!q) return text;
+    return text.replace(new RegExp("("+q+")","ig"),"<mark>$1</mark>");
+  }catch(e){return text;}
+}
+
+function flagsHTML(c){
+  let f="";
+  // 官方清單為毒化物分類之權威來源：有官方值一律以官方值為準（人工值僅在無官方對應時備用）
+  const tox = (c.official&&c.official.tox&&c.official.tox.length)?c.official.tox:(c.tox||[]);
+  if(tox.length) f+=`<span class="flag tox">毒化物第${tox.join("·")}類</span>`;
+  if(c.water) f+=`<span class="flag water">🚱 禁水/遇水反應</span>`;
+  if(c.gas) f+=`<span class="flag fire">💨 氣體</span>`;
+  if(c.haz && c.haz.indexOf("第")===0) f+=`<span class="flag haz">公危·${c.haz.split("(")[0]}</span>`;
+  if(c.isLite) f+=`<span class="flag offi">官方清單</span>`;
+  return f;
+}
+
+/* 官方環境部列管資料區塊 */
+function officialBlock(o){
+  return `<div class="sec offi"><h4>🏛️ 官方列管資料（環境部毒化物）</h4>
+    <dl class="kv">
+      <dt>列管編號</dt><dd>${o.id||"—"}</dd>
+      <dt>毒性分類</dt><dd>${o.tox&&o.tox.length?`第 ${o.tox.join("、")} 類毒性化學物質`:"—"}</dd>
+      <dt>分子式</dt><dd>${o.formula||"—"}</dd>
+      <dt>列管管制濃度</dt><dd>${o.conc?`混合物中該成分濃度達 <span class="qty-hi">${o.conc}%</span> 以上，即列入環境部毒化物管理`:"—"}</dd>
+      <dt>大量運作量</dt><dd>${o.altq?`${o.altq}（達此運作量屬「大量運作」，須符合較嚴管理；單位／級距依官方公告）`:"—"}</dd>
+      <dt>公告日期</dt><dd>${o.date||"—"}</dd>
+      <dt>官方詳細頁</dt><dd>${o.url?`<a href="${o.url}" target="_blank" rel="noopener">毒理與應變資料 ↗</a>`:"—"}</dd>
+    </dl>
+    <p class="hint" style="margin:6px 0 0">⚠️ 上方<b>「列管管制濃度(%)／大量運作量」是環境部毒化物的列管門檻，不是儲存數量上限，也不是消防署的「公共危險物品管制量」</b>。公共危險物品管制量（公斤／公升）屬消防署另一套法規，須依其六類性質個別判定；<b>多數毒化物並不屬於公共危險物品六類，故無對應管制量</b>。</p></div>`;
+}
+
+/* 官方清單品項(無內建詳解)之火場應變通用指引 */
+function liteGuide(c){
+  const tox = (c.tox&&c.tox.length)?c.tox:((c.official&&c.official.tox)||[]);
+  const acute = tox.includes(3);
+  return `<div class="sec fire"><h4>🧯 火場應變指引（官方清單品項·無專屬詳解）</h4>
+    本品為<b>環境部公告列管毒性化學物質</b>${tox.length?`（第 ${tox.join("、")} 類）`:""}。系統未內建其專屬滅火/急救資料，現場請立即：<br>
+    ① 上風處、配戴<b>正壓SCBA</b>與適當化學防護衣，劃定警戒區；<br>
+    ${acute?`<span class="forbid">② 第3類急毒性物質：擴大隔離疏散、嚴防吸入，視為立即致命危害；</span><br>`:`② 防止吸入、接觸與流入下水道；<br>`}
+    ③ 點下方<b>官方詳細頁</b>查毒理/應變，並對照現場 <b>SDS</b> 與 <b>ERG 緊急應變指南手冊</b>（以品名或 UN 編號查指南號碼）；<br>
+    ④ 撥打<b>毒災通報 0800-085-119</b> / 消防 <b>119</b> 取得即時指示。</div>`;
+}
+
+function cardHTML(c,i){
+  const o = c.official;
+  const ids = [
+    o?`<span class="id-pill toxno">列管 ${o.id}</span>`:"",
+    c.cas?`<span class="id-pill">CAS ${c.cas}</span>`:"",
+    c.un?`<span class="id-pill un">UN ${c.un}</span>`:"",
+    c.erg?`<span class="id-pill erg">ERG指南 ${c.erg}</span>`:"",
+    (c.formula||(o&&o.formula))?`<span class="id-pill">${c.formula||o.formula}</span>`:"",
+  ].join("");
+
+  let body;
+  if(c.isLite){
+    body = `${liteGuide(c)}${officialBlock(o)}`;
+  }else{
+    body = `
+      <div class="sec fire"><h4>🧯 火災滅火應變</h4>${c.fire}</div>
+      <div class="sec spill"><h4>💧 洩漏處理</h4>${c.spill}</div>
+      <div class="sec aid"><h4>➕ 急救</h4>${c.aid}</div>
+      <div class="sec haz"><h4>⚠️ 危害特性</h4>${c.hazard}</div>
+      <div class="sec info">
+        <h4>ℹ️ 基本資料 / 公共危險物品管制（消防署）</h4>
+        <dl class="kv">
+          <dt>外觀物性</dt><dd>${c.phys||"—"}</dd>
+          <dt>科技廠/用途</dt><dd>${c.use||"—"}</dd>
+          <dt>個人防護</dt><dd>${c.ppe||"—"}</dd>
+          <dt>公共危險物品</dt><dd>${c.haz||"非屬公共危險物品（依其他法規管理）"}</dd>
+          <dt>管制量</dt><dd>${c.qty?`<span class="qty-hi">${c.qty}</span>`:"—（非第四類等公危分類，或屬高壓氣體/毒化物另管）"}</dd>
+        </dl>
+      </div>
+      ${o?officialBlock(o):""}`;
+  }
+
+  return `
+  <div class="card${c.isLite?" lite":""}" data-i="${i}">
+    <div class="card-head" onclick="toggleCard(this)">
+      <div class="names">
+        <div class="zh">${hl(c.zh)}</div>
+        <div class="en">${hl(c.en)}${c.alias?` · ${hl(c.alias)}`:""}</div>
+        <div class="ids">${ids}</div>
+      </div>
+      <div class="flags">${flagsHTML(c)}<span class="chev">▼</span></div>
+    </div>
+    <div class="card-body">${body}</div>
+  </div>`;
+}
+
+function render(){
+  const list = document.getElementById("list");
+  const results = ALL.map((c,i)=>({c,i})).filter(x=>matchChip(x.c)&&matchQuery(x.c));
+  const richN = ALL.filter(c=>!c.isLite).length;
+  document.getElementById("count").textContent =
+    `總計 ${ALL.length} 筆（含現場應變詳解 ${richN} 筆＋官方列管毒化物 ${OFFICIAL.length} 種）｜符合：${results.length} 筆`
+    + (query?`（關鍵字「${query}」）`:"");
+  if(!results.length){
+    list.innerHTML = `<div class="nores">😕 查無「${query||"此分類"}」<br><span style="font-size:13px">請改用其他名稱 / UN編號 / CAS / 分子式，或撥打毒災通報 0800-085-119</span></div>`;
+    return;
+  }
+  list.innerHTML = results.map(x=>cardHTML(x.c,x.i)).join("");
+}
+
+function toggleCard(el){ el.parentElement.classList.toggle("open"); }
+function toggleRef(id){
+  const el = document.getElementById(id);
+  ["refQty","refGas","refTox","refErg"].forEach(x=>{ if(x!==id) document.getElementById(x).classList.add("hidden"); });
+  el.classList.toggle("hidden");
+  if(!el.classList.contains("hidden")) el.scrollIntoView({behavior:"smooth",block:"start"});
+}
+
+function buildChips(){
+  const box = document.getElementById("chips");
+  box.innerHTML = CHIPS.map(ch=>
+    `<span class="chip ${ch.cls} ${ch.key===activeChip?"active":""}" data-k="${ch.key}">${ch.label}</span>`).join("");
+  box.querySelectorAll(".chip").forEach(el=>{
+    el.onclick=()=>{ activeChip=el.dataset.k; buildChips(); render(); };
+  });
+}
+
+document.getElementById("q").addEventListener("input",e=>{ query=e.target.value.trim(); render(); });
+document.getElementById("clearBtn").addEventListener("click",()=>{
+  document.getElementById("q").value=""; query=""; render(); document.getElementById("q").focus();
+});
+
+/* 匯入/更新官方清單：接受環境部 TOXIC_P_23 原始 JSON，或本系統官方欄位格式 JSON */
+function normalizeImported(arr){
+  return arr.map(o=>{
+    if(o && o.cname_u!==undefined){ // 環境部原始格式
+      const cls = String(o.class||"").split(/[,，、;；\s]+/).filter(x=>/^[1-4]$/.test(x)).map(Number);
+      const id = `${o.toxic_no}-${o.no}`;
+      const roc = String(o.a_date||"").trim();
+      let date = roc;
+      if(roc.length>=7){ date = (parseInt(roc.substring(0,roc.length-4),10)+1911)+"."+roc.substring(roc.length-4,roc.length-2)+"."+roc.substring(roc.length-2); }
+      return {id, zh:(o.cname_u||"").trim(), en:(o.ename||"").trim(), formula:(o.formula||"").trim(),
+              cas:(o.reg_no||"").replace(/\s/g,""), conc:(o.qty_lower||"").toString().trim(),
+              altq:(o.altqty||"").toString().trim(), tox:cls, date, url:`https://toxicdms.moenv.gov.tw/Chm/Detail1/${id}`};
+    }
+    return o; // 已是本系統格式
+  });
+}
+document.getElementById("impFile").addEventListener("change", async (e)=>{
+  const f = e.target.files[0]; if(!f) return;
+  try{
+    const txt = await f.text();
+    let arr = JSON.parse(txt);
+    if(arr && arr.records && Array.isArray(arr.records)) arr = arr.records; // 容許含外層 records
+    if(!Array.isArray(arr)) throw new Error("JSON 須為陣列");
+    const norm = normalizeImported(arr).filter(x=>x && x.zh);
+    if(!norm.length) throw new Error("找不到有效資料列");
+    localStorage.setItem("official_override", JSON.stringify(norm));
+    OFFICIAL.length=0; norm.forEach(x=>OFFICIAL.push(x));
+    OFFICIAL_META.imported = "使用者匯入 " + new Date().toLocaleDateString("zh-TW");
+    ALL = buildAll(); render();
+    alert("✅ 官方清單已更新："+norm.length+" 筆\n（已存於本機瀏覽器，下次開啟自動套用）");
+  }catch(err){ alert("❌ 匯入失敗："+err.message+"\n請確認為環境部 TOXIC_P_23 之 JSON 檔。"); }
+  e.target.value="";
+});
+function resetOfficial(){
+  localStorage.removeItem("official_override");
+  alert("已清除匯入的清單覆蓋。重新整理頁面即恢復內建版本。");
+}
+
+buildChips();
+render();
+
+/* ===== PWA：註冊 Service Worker（離線可用） =====
+   註：Service Worker 僅在 https:// 或 localhost 下可註冊；
+   以 file:// 直接開啟仍可正常使用(本程式自帶全部資料)，只是不會啟用離線安裝。 */
+(function(){
+  const okProto = location.protocol === "https:" || location.hostname === "localhost" || location.hostname === "127.0.0.1";
+  if("serviceWorker" in navigator && okProto){
+    window.addEventListener("load", ()=>{
+      navigator.serviceWorker.register("sw.js")
+        .then(r=>console.info("✅ PWA Service Worker 已註冊，離線可用。scope:", r.scope))
+        .catch(e=>console.warn("Service Worker 註冊失敗：", e));
+    });
+  } else if(location.protocol === "file:"){
+    console.info("ℹ️ 目前以檔案(file://)開啟，程式可正常使用；如需『加入主畫面/離線安裝』，請改用 https 網址開啟。");
+  }
+})();
+</script>
+</body>
+</html>
