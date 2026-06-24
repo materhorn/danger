@@ -292,7 +292,7 @@
     • 環境部化學物質管理署「公告毒性化學物質及其管制濃度與分級運作量一覽表」：cha.gov.tw<br>
     • 全國法規資料庫「毒性及關注化學物質管理法」(O0060012)、「公共危險物品及可燃性高壓氣體製造儲存處理場所設置標準暨安全管理辦法」(D0120025)<br>
     • 內政部消防署 消防法令查詢系統：law.nfa.gov.tw<br>
-    • 緊急應變：環境部毒災通報 <b>0800-085-119</b> / 消防 <b>119</b> / 國家毒物中心 <b>02-2871-7121</b><br>
+    • 緊急電話：火警/救護 <b>119</b>・報案 <b>110</b>・全國環保(毒災/公害)報案專線 <b>0800-066-666</b>・中毒急救諮詢 國家毒物中心(臺北榮總) <b>02-2871-7121</b>（24h，另 02-2875-7525#85500）；化學品事故並應通報當地環保局<br>
     <span style="color:#7a8a98">本檔可離線使用，建議存於手機 / 平板。資料整理日：2026-06。</span>
     <div style="margin-top:10px; padding:9px 11px; background:#0c1c29; border:1px solid #1c4a6b; border-radius:8px; color:#9fd1ff; font-size:12px;">
       📲 <b>安裝成 App（離線可用）</b>：用手機瀏覽器開啟本系統網址後 →
@@ -1737,7 +1737,7 @@ function liteGuide(c){
     ① 上風處、配戴<b>正壓SCBA</b>與適當化學防護衣，劃定警戒區；<br>
     ${acute?`<span class="forbid">② 第3類急毒性物質：擴大隔離疏散、嚴防吸入，視為立即致命危害；</span><br>`:`② 防止吸入、接觸與流入下水道；<br>`}
     ③ 點下方<b>官方詳細頁</b>查毒理/應變，並對照現場 <b>SDS</b> 與 <b>ERG 緊急應變指南手冊</b>（以品名或 UN 編號查指南號碼）；<br>
-    ④ 撥打<b>毒災通報 0800-085-119</b> / 消防 <b>119</b> 取得即時指示。</div>`;
+    ④ 撥打<b>消防 119</b> / 全國環保(毒災)報案 <b>0800-066-666</b> 取得即時指示。</div>`;
 }
 
 /* 關注化學物質區塊 */
@@ -1802,7 +1802,7 @@ function render(){
     `總計 ${ALL.length} 筆（含現場應變詳解 ${richN} 筆＋官方列管毒化物 ${OFFICIAL.length} 種）｜符合：${results.length} 筆`
     + (query?`（關鍵字「${query}」）`:"");
   if(!results.length){
-    list.innerHTML = `<div class="nores">😕 查無「${query||"此分類"}」<br><span style="font-size:13px">請改用其他名稱 / UN編號 / CAS / 分子式，或撥打毒災通報 0800-085-119</span></div>`;
+    list.innerHTML = `<div class="nores">😕 查無「${query||"此分類"}」<br><span style="font-size:13px">請改用其他名稱 / UN編號 / CAS / 分子式，或撥打 消防119 / 全國環保(毒災)報案 0800-066-666</span></div>`;
     return;
   }
   list.innerHTML = results.map(x=>cardHTML(x.c,x.i)).join("");
