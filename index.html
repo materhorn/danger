@@ -74,6 +74,7 @@
   .flag.water{background:#082f3f; color:#7dd3fc; border:1px solid #1c5169;}
   .flag.haz{background:#1f3326; color:#86efac;}
   .flag.offi{background:#0e2233; color:#7dd3fc; border:1px solid #1c4a6b;}
+  .flag.concern{background:#3a2c0e; color:#ffd98a; border:1px solid #5a4a1e;}
   .id-pill.toxno{color:#86efac; border-color:#1f4d33; background:#0c1a12;}
   .card.lite{border-style:dashed; border-color:#2c3e4d;}
   .card.lite .zh{font-size:16px;}
@@ -98,6 +99,8 @@
   .sec.offi{background:#0c1c29; border:1px solid #1c4a6b;}
   .sec.offi h4{color:#7dd3fc;}
   .sec.offi a{color:#7dd3fc;}
+  .sec.concern{background:#2a230e; border:1px solid #5a4a1e;}
+  .sec.concern h4{color:#ffd98a;}
   .sec .forbid{color:#ff8a7d; font-weight:700;}
 
   .kv{display:grid; grid-template-columns:auto 1fr; gap:3px 12px; font-size:13.5px; margin-top:4px;}
@@ -145,6 +148,7 @@
   <div class="topbtns">
     <button onclick="toggleRef('refQty')">📋 公共危險物品管制量表</button>
     <button onclick="toggleRef('refGas')">🛢️ 高壓氣體分類表</button>
+    <button onclick="toggleRef('refBurn')">🔥 材料燃燒毒氣</button>
     <button onclick="toggleRef('refTox')">☠️ 毒化物 4 類定義</button>
     <button onclick="toggleRef('refErg')">📖 ERG 應變指南說明</button>
     <input type="file" id="impFile" accept=".json,application/json" class="hidden">
@@ -256,6 +260,30 @@
     <p class="hint" style="margin-top:8px">同一氣體可同時屬多類（如<b>氨、一氧化碳、環氧乙烷、氰化氫、硫化氫</b>同列可燃性＋毒性）。「容許濃度」依勞工作業場所容許暴露標準；火場常見之分解毒氣如<b>光氣</b>(含氯有機物燃燒)亦在毒性氣體之列。本表所列氣體於本系統多已建卡片，可直接於上方搜尋。</p>
   </div>
 
+  <div class="ref hidden" id="refBurn">
+    <h3>常見材料／塑膠「燃燒分解毒氣」對照（火場必讀）</h3>
+    <p style="font-size:13px;margin:4px 0 8px;color:#9fb0bf">塑膠/材料本身多非「列管危險物品」，但<b>火場真正的殺手是它們燃燒時放出的毒氣</b>。下表為常見材料受熱/燃燒之主要有毒產物。</p>
+    <table>
+      <thead><tr><th>材料</th><th>主要有毒燃燒／裂解產物</th><th>現場重點</th></tr></thead>
+      <tbody>
+        <tr><td>聚乙烯 PE／聚丙烯 PP</td><td><b>CO</b>、CO₂、丙烯醛、醛類</td><td>熔融滴落延燒；密閉空間CO累積</td></tr>
+        <tr><td><b>聚氯乙烯 PVC</b></td><td><b>大量HCl</b>(腐蝕)、CO、微量<b>光氣</b>、低溫悶燒生<b>戴奧辛</b></td><td>HCl腐蝕呼吸道/設備；事後須除汙</td></tr>
+        <tr><td>聚苯乙烯 PS／保麗龍</td><td><b>CO</b>、苯乙烯、苯、多環芳烴(致癌)</td><td>發泡體火勢極猛、濃黑煙瞬間瀰漫</td></tr>
+        <tr><td><b>聚氨酯 PU 泡棉</b></td><td><b>氰化氫(HCN)＋大量CO</b>、NOx、異氰酸酯</td><td><b>HCN+CO雙重致命</b>，建築火災致死主因</td></tr>
+        <tr><td>ABS 樹脂</td><td><b>HCN</b>、CO、苯乙烯、丁二烯</td><td>含氮→HCN；昏迷者疑雙重中毒</td></tr>
+        <tr><td>聚碳酸酯 PC</td><td>CO、苯酚、CO₂</td><td>正壓SCBA</td></tr>
+        <tr><td>PET(寶特瓶/纖維)</td><td>CO、乙醛、苯甲酸</td><td>正壓SCBA</td></tr>
+        <tr><td>三聚氰胺／酚醛／尿素樹脂</td><td><b>HCN</b>、NH₃、甲醛、NOx</td><td>含氮樹脂→HCN</td></tr>
+        <tr><td>尼龍／羊毛／絲(含氮)</td><td><b>HCN</b>、NH₃、CO；羊毛/絲另生<b>H₂S</b></td><td>含氮纖維→HCN</td></tr>
+        <tr><td><b>鐵氟龍 PTFE／含氟聚合物</b></td><td><b>HF</b>、羰基氟、<b>全氟異丁烯(PFIB劇毒)</b></td><td>>350°C裂解；聚合物煙塵熱、肺水腫</td></tr>
+        <tr><td>橡膠／輪胎</td><td>CO、<b>SO₂</b>、<b>H₂S</b>、苯、多環芳烴、濃油煙</td><td>輪胎火持久難滅、易復燃、流熱解油</td></tr>
+        <tr><td>木材／紙／棉(纖維素)</td><td>CO、CO₂、醛類、有機酸</td><td>悶燒CO高；最常見火載</td></tr>
+        <tr><td>含溴／磷阻燃材料</td><td>HBr、溴/磷化合物、CO、腐蝕煙</td><td>阻燃家具/電子件燃燒</td></tr>
+      </tbody>
+    </table>
+    <p class="hint" style="margin-top:8px">🔑 <b>火場通則</b>：幾乎所有有機物燃燒都生 <b>一氧化碳(CO)＝頭號殺手</b>；<b>含氮</b>材料(PU/尼龍/ABS/羊毛/含氮樹脂)→ <b>氰化氫(HCN)</b>；<b>含氯</b>(PVC)→ HCl＋光氣；<b>含氟</b>(鐵氟龍)→ HF/PFIB；<b>含硫</b>(橡膠)→ SO₂/H₂S。<b>火場昏迷者一律警惕 CO＋HCN 雙重中毒</b>；全程正壓SCBA、上風、含氯/氟煙霧具腐蝕與延遲性肺水腫風險。上述材料可直接於搜尋框輸入(如「PVC」「保麗龍」「鐵氟龍」)查卡片。</p>
+  </div>
+
   <div class="count" id="count"></div>
   <div id="list"></div>
 
@@ -336,7 +364,7 @@ const DATA = [
  aid:"吸入：移至新鮮空氣、給氧；眼/皮膚接觸<b>大量清水沖洗≧15-20分</b>，送醫。",
  ppe:"防化服 + SCBA；抗氨手套。"},
 
-{zh:"氟化氫(無水) / 氫氟酸",en:"Hydrogen fluoride / Hydrofluoric acid",alias:"HF 氟酸 BOE",cas:"7664-39-3",un:"1052",erg:"125",tox:null,cat:["tech","toxic"],water:false,gas:false,haz:"非公共危險物品(劇毒腐蝕性)",qty:null,
+{zh:"氟化氫(無水) / 氫氟酸",en:"Hydrogen fluoride / Hydrofluoric acid",alias:"HF 氟酸 BOE",cas:"7664-39-3",un:"1052",erg:"125",tox:null,cat:["tech"],concern:"民生議題類",water:false,gas:false,haz:"關注化學物質；非公共危險物品(劇毒腐蝕性)",qty:null,
  use:"半導體/面板<b>蝕刻、清洗</b>最關鍵藥液；BOE 緩衝蝕刻液主成分。",
  phys:"無水HF為發煙液/氣體；水溶液(氫氟酸)無色發煙、刺鼻。UN1790為溶液。",
  hazard:"<b>極危險</b>：氟離子穿透皮膚深層、與鈣鎂結合致組織壞死與<b>致命性低血鈣/心律不整</b>；少量接觸(體表>2-3%)即可致死，疼痛常延遲數小時。吸入致肺水腫。",
@@ -799,7 +827,7 @@ const DATA = [
  aid:"接觸大量沖水;誤食漱口送醫。",
  ppe:"護目鏡、手套。"},
 
-{zh:"硝酸銨",en:"Ammonium nitrate",alias:"NH4NO3",cas:"6484-52-2",un:"1942",erg:"140",tox:null,cat:["oxid"],water:false,gas:false,haz:"第一類 氧化性固體（硝酸鹽類）",qty:"1,000 公斤（硝酸鹽類通常列第三級；惟大量堆積具爆轟性，另受爆裂物相關規範）",
+{zh:"硝酸銨",en:"Ammonium nitrate",alias:"NH4NO3",cas:"6484-52-2",un:"1942",erg:"140",tox:null,cat:["oxid"],concern:"爆裂物先驅化學物質類",water:false,gas:false,haz:"第一類 氧化性固體（硝酸鹽類）",qty:"1,000 公斤（硝酸鹽類通常列第三級；惟大量堆積具爆轟性，另受爆裂物相關規範）",
  use:"肥料、工業炸藥/ANFO 原料、冷敷包。",
  phys:"白色晶/粒,無味;強氧化、不燃但助燃;<b>大量受熱/受污染可爆轟</b>。",
  hazard:"強氧化劑;<b>大量堆積受熱或受可燃物污染可發生劇烈爆炸(歷史重大災例)</b>;受熱放有毒NOx。",
@@ -982,7 +1010,7 @@ DATA.push(
  aid:"窒息者移至新鮮空氣、給氧;接觸分解物比照HF;送醫。",
  ppe:"SCBA(缺氧/分解物時)。"},
 
-{zh:"一氧化二氮 / 笑氣",en:"Nitrous oxide",alias:"N2O 笑氣",cas:"10024-97-2",un:"1070",erg:"122",tox:null,cat:["tech"],water:false,gas:true,haz:"氧化性(助燃)高壓氣體",qty:null,
+{zh:"一氧化二氮 / 笑氣",en:"Nitrous oxide",alias:"N2O 笑氣",cas:"10024-97-2",un:"1070",erg:"122",tox:null,cat:["tech"],concern:"民生議題類",water:false,gas:true,haz:"氧化性(助燃)高壓氣體",qty:null,
  use:"半導體 CVD(氧化矽/氮氧化矽)氧化源、醫療麻醉。",
  phys:"無色氣體,微甜味;不燃但<b>強助燃(高溫分解放氧)</b>。",
  hazard:"助燃使可燃物劇烈燃燒;高濃度致缺氧/麻醉;受熱容器爆炸。",
@@ -1231,7 +1259,7 @@ DATA.push(
  aid:"吸入移離給氧;眼/皮膚大量沖水;送醫。",
  ppe:"抗閃焰 + SCBA、防化手套。"},
 
-{zh:"二乙胺",en:"Diethylamine",alias:"DEA (C2H5)2NH",cas:"109-89-7",un:"1154",erg:"132",tox:null,cat:["common"],water:false,gas:false,haz:"第四類 易燃液體－第一石油類（水溶性，與水互溶）",qty:"400 公升（第一石油類·水溶性）",
+{zh:"二乙胺",en:"Diethylamine",alias:"二乙基胺 (C2H5)2NH（注意：非二乙醇胺）",cas:"109-89-7",un:"1154",erg:"132",tox:null,cat:["common"],water:false,gas:false,haz:"第四類 易燃液體－第一石油類（水溶性，與水互溶）",qty:"400 公升（第一石油類·水溶性）",
  use:"橡膠/醫藥/農藥/腐蝕抑制劑化工原料。",
  phys:"無色易揮發液,強烈氨/魚腥味;易燃(閃火點約-23°C)、腐蝕。",
  hazard:"高度易燃;強刺激腐蝕、肺水腫;有毒。",
@@ -1284,6 +1312,258 @@ DATA.push(
  spill:"除引火源、通風、吸收圍堵、防入下水道。",
  aid:"吸入移離給氧;接觸沖水;送醫。",
  ppe:"防溶劑手套、護目鏡、抗閃焰。"}
+);
+
+/* ---------- 常見材料/塑膠（本身非危險物品，危害在『燃燒分解毒氣』） ---------- */
+DATA.push(
+{zh:"聚乙烯 / 聚丙烯",en:"Polyethylene / Polypropylene",alias:"PE PP 塑膠袋 保鮮膜 塑膠容器 塑膠管",cas:"",un:"",erg:"",tox:null,cat:["common","material"],water:false,gas:false,haz:"一般泛用塑膠（非列管危險物品）；危害在燃燒分解毒氣",qty:null,
+ use:"塑膠袋/膜、容器、管材、包裝——最常見泛用塑膠。",
+ phys:"固態塑膠,常溫無毒不揮發;受熱熔融滴落、易燃,燃燒火勢猛且滴落引燃。",
+ hazard:"<b>燃燒/熱裂解產物</b>:大量<b>一氧化碳(CO)</b>、CO₂、丙烯醛與醛類(強刺激)、濃煙;熔融滴落物造成燙傷並助長延燒。",
+ fire:"水、泡沫、乾粉皆可;<b>注意熔融滴落物延燒</b>;密閉空間CO快速累積,全程SCBA。",
+ spill:"固體,無洩漏問題。",
+ aid:"濃煙/CO吸入者移至新鮮空氣、給氧、送醫;熔融燙傷以大量冷水沖。",
+ ppe:"火場正壓SCBA(防CO)。"},
+
+{zh:"聚氯乙烯",en:"Polyvinyl chloride (PVC)",alias:"PVC 塑膠管 電線被覆 地板 雨衣 浪板",cas:"",un:"",erg:"",tox:null,cat:["common","material"],water:false,gas:false,haz:"一般塑膠（非列管危險物品）；燃燒生劇毒腐蝕煙",qty:null,
+ use:"水管、電線被覆、地板、浪板、雨衣等(含氯塑膠)。",
+ phys:"固態塑膠,常溫穩定;不易自燃但燃燒生大量毒煙。",
+ hazard:"<b>燃燒產物極毒</b>:大量<b>氯化氫(HCl)腐蝕性白/黑煙</b>、CO、微量<b>光氣(COCl₂)</b>;低溫悶燒另生<b>戴奧辛/呋喃</b>;濃黑煙。",
+ fire:"水霧/泡沫;<b>HCl煙強烈腐蝕呼吸道與設備</b>,全程正壓SCBA、上風;事後場所需除汙、設備防腐蝕。",
+ spill:"固體,無洩漏問題。",
+ aid:"吸入HCl煙者移離給氧、<b>警惕延遲性肺水腫</b>、送醫;眼/皮膚接觸煙塵沖水。",
+ ppe:"正壓SCBA + 防酸(HCl煙)。"},
+
+{zh:"聚苯乙烯 / 保麗龍",en:"Polystyrene / EPS",alias:"PS EPS 保麗龍 發泡 免洗餐具 隔熱板",cas:"",un:"",erg:"",tox:null,cat:["common","material"],water:false,gas:false,haz:"一般塑膠/發泡材（非列管危險物品）；燃燒猛烈濃煙",qty:null,
+ use:"免洗餐具、發泡保麗龍(EPS)、隔熱/緩衝包材、家電外殼。",
+ phys:"固態/發泡固體;發泡體比表面積大,<b>極易燃、火勢蔓延極快</b>。",
+ hazard:"燃燒生<b>CO、苯乙烯、苯、多環芳烴(致癌)</b>;<b>大量濃黑油煙、火勢極猛</b>(發泡體尤甚)。",
+ fire:"水、泡沫;<b>發泡保麗龍燃燒極快、濃煙瞬間瀰漫</b>,迅速擴大隔離、SCBA、上風。",
+ spill:"固體,無洩漏問題。",
+ aid:"濃煙/CO吸入者移離給氧、送醫。",
+ ppe:"正壓SCBA(濃煙/CO)。"},
+
+{zh:"聚氨酯 / PU泡棉",en:"Polyurethane foam",alias:"PU 發泡 保溫材 隔熱 沙發泡棉 床墊",cas:"",un:"",erg:"",tox:null,cat:["common","material"],water:false,gas:false,haz:"一般發泡材（非列管危險物品）；燃燒生氰化氫+CO",qty:null,
+ use:"沙發/床墊泡棉、建築隔熱/保溫材、防水發泡、座椅。",
+ phys:"發泡固體;<b>極易燃、火勢與毒煙蔓延極快</b>(建築火災致死主因之一)。",
+ hazard:"<b>燃燒生氰化氫(HCN)＋大量一氧化碳(CO)</b>——火場雙重致命氣體、NOx、異氰酸酯;<b>毒煙猛烈、致死極快</b>。",
+ fire:"水、泡沫;<b>HCN+CO雙重中毒風險極高</b>,絕對正壓SCBA、快速擴大隔離、上風。",
+ spill:"固體,無洩漏問題。",
+ aid:"<b>火場昏迷者高度懷疑CO＋HCN中毒</b>:立即移離、給100%氧、必要時施用氰化物解毒劑、送醫。",
+ ppe:"正壓SCBA(CO+HCN)。"},
+
+{zh:"ABS 樹脂",en:"ABS resin",alias:"ABS 家電外殼 玩具 3D列印 行李箱",cas:"",un:"",erg:"",tox:null,cat:["common","material"],water:false,gas:false,haz:"一般工程塑膠（非列管危險物品）；燃燒生HCN+CO",qty:null,
+ use:"家電/3C外殼、玩具、行李箱、3D列印(含氮丙烯腈共聚)。",
+ phys:"固態塑膠;易燃,燃燒濃黑煙。",
+ hazard:"燃燒生<b>CO、氰化氫(HCN)</b>、苯乙烯、丁二烯、濃黑煙(含氮故有HCN)。",
+ fire:"水、泡沫、乾粉;<b>HCN+CO風險</b>,正壓SCBA、上風。",
+ spill:"固體,無洩漏問題。",
+ aid:"火場昏迷者疑CO+HCN中毒:給100%氧、必要時氰化物解毒劑、送醫。",
+ ppe:"正壓SCBA。"},
+
+{zh:"尼龍 / 羊毛 / 絲",en:"Nylon / Wool / Silk",alias:"聚醯胺 PA 蛋白質纖維 地毯 衣物 漁網",cas:"",un:"",erg:"",tox:null,cat:["common","material"],water:false,gas:false,haz:"含氮纖維（非列管危險物品）；燃燒生氰化氫",qty:null,
+ use:"衣物、地毯、漁網、繩索(尼龍);羊毛/絲為蛋白質纖維。",
+ phys:"固態纖維;尼龍熔融滴落,羊毛/絲較難燃但悶燒。",
+ hazard:"<b>含氮材料燃燒生氰化氫(HCN)</b>、氨、CO;羊毛/絲(含硫)另生<b>H₂S</b>;尼龍熔融滴落燙傷。",
+ fire:"水、泡沫;<b>HCN風險</b>,正壓SCBA、上風。",
+ spill:"固體,無洩漏問題。",
+ aid:"火場昏迷者疑CO+HCN:給100%氧、必要時解毒劑、送醫。",
+ ppe:"正壓SCBA。"},
+
+{zh:"鐵氟龍 / 含氟聚合物",en:"PTFE / Fluoropolymer",alias:"鐵氟龍 鐵弗龍 不沾鍋 PTFE PFA FEP 鐵覆龍",cas:"",un:"",erg:"",tox:null,cat:["common","material","tech"],water:false,gas:false,haz:"含氟聚合物（非列管危險物品）；高溫裂解生HF/劇毒PFIB",qty:null,
+ use:"不沾鍋塗層、耐熱/耐蝕墊片管件、電線絕緣、半導體耐酸元件。",
+ phys:"固態含氟塑膠;常溫極穩定無毒,<b>高溫(>350°C)裂解才釋毒</b>。",
+ hazard:"高溫裂解生<b>氟化氫(HF)、羰基氟、全氟異丁烯(PFIB,劇毒)</b>;低濃度即致『<b>聚合物煙塵熱</b>』(類流感發燒),高濃度致命肺水腫;空鍋乾燒亦可釋出。",
+ fire:"水霧冷卻;<b>HF/PFIB劇毒</b>,全程正壓SCBA、上風,勿吸入受熱煙霧。",
+ spill:"固體,無洩漏問題。",
+ aid:"吸入者移離給氧、<b>觀察延遲性肺水腫</b>、比照HF注意氟中毒、送醫。",
+ ppe:"正壓SCBA(HF/PFIB)。"},
+
+{zh:"橡膠 / 輪胎",en:"Rubber / Tyre",alias:"天然橡膠 合成橡膠 輪胎 膠料 NBR SBR",cas:"",un:"",erg:"",tox:null,cat:["common","material"],water:false,gas:false,haz:"橡膠製品（非列管危險物品）；燃燒生SO₂/H₂S/濃油煙",qty:null,
+ use:"輪胎、墊片、管材、鞋材、密封件(天然/合成橡膠)。",
+ phys:"固態彈性體;燃燒生大量濃黑油煙,<b>輪胎堆火持久難滅、易復燃</b>。",
+ hazard:"燃燒生<b>CO、二氧化硫(SO₂)、硫化氫(H₂S)</b>、苯、多環芳烴、<b>大量濃黑油煙</b>;熱裂解流出可燃熱解油。",
+ fire:"大量水冷卻＋泡沫;<b>輪胎堆火持久、易復燃</b>,需長時間灌救並防熱解油流淌延燒;SCBA(SO₂/H₂S/濃煙)。",
+ spill:"固體,無洩漏問題;熱裂解油另須圍堵。",
+ aid:"吸入濃煙/SO₂/H₂S者移離給氧、送醫。",
+ ppe:"正壓SCBA。"}
+);
+
+/* ---------- 乙醇胺類（單/二/三乙醇胺；與「乙胺類」不同） ---------- */
+DATA.push(
+{zh:"單乙醇胺 / 乙醇胺",en:"Monoethanolamine (MEA)",alias:"MEA 乙醇胺 2-胺基乙醇 HOCH2CH2NH2",cas:"141-43-5",un:"2491",erg:"153",tox:null,cat:["tech","common"],water:false,gas:false,haz:"第四類 易燃液體－第三石油類（水溶性）",qty:"4,000 公升（第三石油類·水溶性）",
+ use:"<b>半導體光阻剝離液(stripper)主成分</b>、酸氣(CO₂/H₂S)吸收、界面活性劑/清潔劑、化妝品。",
+ phys:"無色黏稠液,氨/魚腥味,吸濕;可燃(閃火點約85-93°C)、鹼性腐蝕。",
+ hazard:"鹼性<b>腐蝕灼傷</b>眼/皮膚/呼吸道、肺水腫;可燃;與強酸/強氧化劑劇烈放熱;燃燒生NOx、NH₃、CO。",
+ fire:"抗醇泡沫、乾粉、CO₂、水霧;冷卻容器;燃燒生有毒NOx,SCBA、上風。",
+ spill:"通風、吸收圍堵、謹慎稀釋;防接觸與流入水體。",
+ aid:"皮膚/眼<b>大量清水沖洗≧15分</b>;吸入移離給氧;誤食漱口勿催吐;送醫。",
+ ppe:"防化手套(丁基)、面罩/護目鏡、防護衣。"},
+
+{zh:"二乙醇胺",en:"Diethanolamine (DEA)",alias:"二乙醇胺 DEA (HOCH2CH2)2NH",cas:"111-42-2",un:"",erg:"153",tox:null,cat:["tech","common"],water:false,gas:false,haz:"第四類 易燃液體－第三石油類（水溶性）",qty:"4,000 公升（第三石油類·水溶性）",
+ use:"酸氣吸收、界面活性劑/乳化劑、金屬加工液、水泥添加、化妝品。",
+ phys:"白色固體/黏稠液(熔點約28°C),微氨味,吸濕;可燃(閃火點約138°C)、鹼性腐蝕。",
+ hazard:"<b>列管毒化物(第4類)</b>;鹼性腐蝕刺激;可燃;<b>與亞硝酸鹽可生成致癌亞硝胺</b>。",
+ fire:"抗醇泡沫、乾粉、CO₂、水霧;冷卻容器;燃燒生NOx,SCBA。",
+ spill:"通風、吸收圍堵、稀釋;防接觸。",
+ aid:"皮膚/眼大量沖水≧15分;吸入移離給氧;送醫。",
+ ppe:"防化手套、面罩/護目鏡、防護衣。"},
+
+{zh:"三乙醇胺",en:"Triethanolamine (TEA)",alias:"三乙醇胺 TEA (HOCH2CH2)3N",cas:"102-71-6",un:"",erg:"",tox:null,cat:["tech","common"],water:false,gas:false,haz:"第四類 易燃液體－第三石油類（水溶性）",qty:"4,000 公升（第三石油類·水溶性）",
+ use:"水泥研磨助劑、切削/金屬加工液、化妝品乳化、界面活性劑、pH調整。",
+ phys:"無色~淡黃黏稠液,微氨味,吸濕;可燃(閃火點約179°C,較難點燃)、弱鹼。",
+ hazard:"刺激眼/皮膚/呼吸道(急毒性低);可燃;<b>與亞硝酸鹽可生成致癌亞硝胺</b>;燃燒生NOx、CO。",
+ fire:"抗醇泡沫、乾粉、CO₂、水霧;冷卻容器。",
+ spill:"通風、吸收圍堵、稀釋。",
+ aid:"皮膚/眼大量沖水;吸入移離給氧;送醫。",
+ ppe:"防化手套、護目鏡。"}
+);
+
+/* ---------- 環境部公告「關注化學物質」(共19種，此為新增之16種；笑氣/HF/硝酸銨已於前面卡片加註) ---------- */
+DATA.push(
+{zh:"1,4-丁二醇",en:"1,4-Butanediol",alias:"BDO 1,4-丁二醇 GHB前驅",cas:"110-63-4",un:"",erg:"",tox:null,cat:["concern","common"],concern:"民生議題類",water:false,gas:false,haz:"關注化學物質；可燃液體",qty:null,
+ use:"PBT/PU/溶劑(GBL、THF)工業原料;<b>體內代謝為GHB(毒品「神仙水」)，屬濫用前驅物</b>。",
+ phys:"無色黏稠液,微味,吸濕;可燃(閃火點高)。",
+ hazard:"關注化學物質(禁網路交易);<b>誤食/濫用→體內生成GHB致中樞抑制、昏迷、呼吸抑制</b>;可燃。",
+ fire:"乾粉、CO₂、抗醇泡沫、水霧;冷卻容器。",
+ spill:"通風、吸收圍堵。",
+ aid:"中毒(昏迷/呼吸抑制)維持呼吸道、給氧、送醫;接觸沖水。",
+ ppe:"護目鏡、手套。"},
+
+{zh:"硝基甲烷",en:"Nitromethane",alias:"CH3NO2",cas:"75-52-5",un:"1261",erg:"128",tox:null,cat:["concern","common"],concern:"爆裂物先驅化學物質類",water:false,gas:false,haz:"第四類 易燃液體－第二石油類(水溶性)",qty:"2,000 公升（第二石油類·水溶性）",
+ use:"賽車/模型燃料、溶劑、有機合成;<b>關注化學物質-爆裂物先驅</b>。",
+ phys:"無色油狀液,微果味;可燃(閃火點約35°C);<b>受強震/受熱/受鹼或胺催化可爆轟</b>。",
+ hazard:"關注化學物質(禁網路交易);可燃且<b>可作炸藥(受起爆/強鹼催化可爆轟)</b>;有毒(刺激、肝/甲狀腺)。",
+ fire:"泡沫、乾粉、CO₂、水霧;<b>大量起火且受侷限有爆轟風險→遠距撤離</b>;冷卻容器。",
+ spill:"除引火源、上風、吸收圍堵、避免強鹼/胺接觸。",
+ aid:"吸入移離給氧;接觸沖水;送醫。",
+ ppe:"抗閃焰、護目鏡、防護。"},
+
+{zh:"疊氮化鈉",en:"Sodium azide",alias:"NaN3 安全氣囊藥劑",cas:"26628-22-8",un:"1687",erg:"153",tox:null,cat:["concern"],concern:"爆裂物先驅化學物質類",water:false,gas:false,haz:"關注化學物質；劇毒固體",qty:null,
+ use:"安全氣囊充氣劑、防腐/生化試劑、有機合成;<b>關注化學物質</b>。",
+ phys:"白色晶/粉,無味;<b>劇毒</b>;遇酸放劇毒疊氮化氫(HN₃)。",
+ hazard:"<b>極劇毒</b>(類氰化物,阻斷細胞呼吸,少量即致命、致嚴重低血壓);<span class='forbid'>遇酸放劇毒HN₃氣;與銅/鉛等重金屬(水管)生成極敏感易爆疊氮化物</span>。",
+ fire:"<b>大量水</b>滅並冷卻;<span class='forbid'>嚴禁接觸酸與重金屬</span>;受熱分解放有毒氮氧化物。",
+ spill:"<b>勿沖入金屬管路、勿接觸酸</b>;乾式收集密封;殘留以大量水稀釋。",
+ aid:"<b>移離、給100%氧、比照氰化物中毒處置、立即送醫</b>;接觸大量沖水。",
+ ppe:"A級防護/防化手套、面罩;備氧。"},
+
+{zh:"過氯酸銨",en:"Ammonium perchlorate",alias:"AP NH4ClO4",cas:"7790-98-9",un:"1442",erg:"143",tox:null,cat:["concern","oxid"],concern:"爆裂物先驅化學物質類",water:false,gas:false,haz:"第一類 氧化性固體（過氯酸鹽類）",qty:"50 公斤（第一級）",
+ use:"<b>固體火箭推進劑主氧化劑</b>、煙火;<b>關注化學物質-爆裂物先驅</b>。",
+ phys:"白色晶,無味;強氧化;<b>受熱/撞擊/與燃料混合可爆轟</b>。",
+ hazard:"關注化學物質;<b>強氧化劑兼可爆轟</b>,與鋁粉等燃料混合極危險;受熱放Cl₂/HCl/NOx。",
+ fire:"<b>大量水</b>遠距;<span class='forbid'>大量起火且受侷限應撤離(爆轟)</span>;移開可燃物。",
+ spill:"勿混可燃/金屬粉;大量水稀釋、輕收避免摩擦。",
+ aid:"接觸沖水;吸入分解氣移離給氧;送醫。",
+ ppe:"護目鏡、手套、SCBA(火場)。"},
+
+{zh:"過氯酸鈉",en:"Sodium perchlorate",alias:"NaClO4",cas:"7601-89-0",un:"1502",erg:"140",tox:null,cat:["concern","oxid"],concern:"爆裂物先驅化學物質類",water:false,gas:false,haz:"第一類 氧化性固體（過氯酸鹽類）",qty:"參照氧化性固體分級",
+ use:"氧化劑、製過氯酸鹽、除草;關注化學物質-爆裂物先驅。",
+ phys:"白色潮解晶;強氧化、助燃。",
+ hazard:"關注化學物質;強氧化劑,與可燃物/還原劑混合受熱撞擊可爆;受熱放Cl₂/HCl。",
+ fire:"<b>大量水</b>;移開可燃物。",
+ spill:"勿混可燃物;大量水沖稀。",
+ aid:"接觸沖水;送醫。",
+ ppe:"護目鏡、手套。"},
+
+{zh:"硝酸鈣",en:"Calcium nitrate",alias:"Ca(NO3)2 硝石灰",cas:"10124-37-5",un:"1454",erg:"140",tox:null,cat:["concern","oxid"],concern:"爆裂物先驅化學物質類",water:false,gas:false,haz:"第一類 氧化性固體（硝酸鹽類）",qty:"參照氧化性固體分級（硝酸鹽類常列第三級1,000公斤）",
+ use:"肥料、混凝土速凝/防凍;<b>關注化學物質-爆裂物先驅</b>。",
+ phys:"白色潮解晶,無味;強氧化、不燃但助燃。",
+ hazard:"關注化學物質;<b>氧化劑</b>,與可燃物/有機物混合受熱可燃爆;受熱放NOx。",
+ fire:"<b>大量水</b>;移開可燃物。",
+ spill:"勿混可燃物;大量水沖稀。",
+ aid:"接觸沖水;吸入NOx移離給氧;送醫。",
+ ppe:"護目鏡、手套。"},
+
+{zh:"硝酸鈉",en:"Sodium nitrate",alias:"NaNO3 智利硝石",cas:"7631-99-4",un:"1498",erg:"140",tox:null,cat:["concern","oxid"],concern:"爆裂物先驅化學物質類",water:false,gas:false,haz:"第一類 氧化性固體（硝酸鹽類）",qty:"參照氧化性固體分級（常列第三級1,000公斤）",
+ use:"肥料、食品發色/防腐、玻璃/煙火;關注化學物質-爆裂物先驅兼食安。",
+ phys:"白色晶,無味;強氧化、助燃。",
+ hazard:"關注化學物質;氧化劑,與可燃物混受熱可燃爆;受熱放NOx;過量食入致高鐵血紅蛋白。",
+ fire:"<b>大量水</b>;移開可燃物。",
+ spill:"勿混可燃物;大量水沖稀。",
+ aid:"接觸沖水;送醫。",
+ ppe:"護目鏡、手套。"},
+
+{zh:"硝酸銨鈣",en:"Calcium ammonium nitrate",alias:"CAN 硝酸銨鈣 肥料",cas:"15245-12-2",un:"2068",erg:"140",tox:null,cat:["concern","oxid"],concern:"爆裂物先驅化學物質類",water:false,gas:false,haz:"第一類 氧化性固體（硝酸鹽類）",qty:"參照氧化性固體分級",
+ use:"氮肥;<b>關注化學物質-爆裂物先驅(可作土製炸藥)</b>。",
+ phys:"白/灰粒,無味;氧化、助燃。",
+ hazard:"關注化學物質;氧化劑,大量受熱或受可燃物污染可劇烈分解/爆炸;受熱放NOx。",
+ fire:"<b>大量水</b>遠距;大量起火且受侷限應撤離;移開可燃物。",
+ spill:"勿混可燃/油類;大量水沖稀。",
+ aid:"接觸沖水;吸入NOx移離給氧;送醫。",
+ ppe:"護目鏡、手套、SCBA(火場NOx)。"},
+
+{zh:"磷化鋁",en:"Aluminium phosphide",alias:"AlP 磷化鋁錠 燻蒸劑",cas:"20859-73-8",un:"1397",erg:"139",tox:null,cat:["concern"],concern:"具食安風險疑慮類",water:true,gas:false,haz:"第三類 禁水性物質（金屬磷化物）",qty:"第三種 300 公斤",
+ use:"穀物/倉儲燻蒸殺蟲劑(錠劑);<b>關注化學物質(曾遭非法用於食品儲運)</b>。",
+ phys:"灰綠/黃色固體/錠;<b>遇水/潮氣/酸放出劇毒易燃磷化氫(PH₃)</b>。",
+ hazard:"<b>遇水/胃酸放劇毒PH₃</b>(誤食致命、現場釋毒氣);PH₃易燃可自燃;禁水。",
+ fire:"<span class='forbid'>禁水</span>;以乾粉、CO₂、乾砂處理;釋出PH₃須SCBA、上風。",
+ spill:"保持乾燥、乾式收集密封、隔離水/酸;通風驅散PH₃。",
+ aid:"吸入PH₃移離給氧、送醫;<b>誤食(釋PH₃)極危險，立即送醫</b>。",
+ ppe:"SCBA、乾燥防護手套。"},
+
+{zh:"硫化鈉",en:"Sodium sulfide",alias:"Na2S 臭蘇打",cas:"1313-82-2",un:"1385",erg:"135",tox:null,cat:["concern"],concern:"具食安風險疑慮類",water:false,gas:false,haz:"關注化學物質；鹼性腐蝕，遇酸放H₂S",qty:null,
+ use:"皮革脫毛、染料、製漿、選礦;關注化學物質。",
+ phys:"黃/紅色固體,臭蛋味,潮解;鹼性腐蝕;可燃。",
+ hazard:"關注化學物質;鹼性腐蝕灼傷;<b>遇酸/受熱放劇毒易燃硫化氫(H₂S)</b>;與氧化劑反應、粉塵可燃。",
+ fire:"乾粉、CO₂、霧狀水;<span class='forbid'>禁與酸接觸(放H₂S)</span>;SCBA。",
+ spill:"乾式收集、隔離酸與氧化劑;謹慎大量水稀釋。",
+ aid:"接觸大量沖水;吸入H₂S移離給氧、送醫。",
+ ppe:"防化手套、面罩、SCBA(H₂S)。"},
+
+{zh:"硫氰酸鈉",en:"Sodium thiocyanate",alias:"NaSCN 硫氰化鈉",cas:"540-72-7",un:"",erg:"",tox:null,cat:["concern"],concern:"具食安風險疑慮類",water:false,gas:false,haz:"關注化學物質；有毒固體",qty:null,
+ use:"染整、攝影、化工、除草;關注化學物質(曾遭非法添加)。",
+ phys:"白色潮解晶,無味;有毒。",
+ hazard:"關注化學物質;有毒(體內可代謝放氰、影響甲狀腺);<b>遇酸/受熱放有毒HCN、SO₂、NOx</b>。",
+ fire:"周邊火以乾粉/CO₂/水霧;受熱放有毒氣,SCBA。",
+ spill:"乾式收集、隔離酸;大量水稀釋。",
+ aid:"誤食/吸入移離、給氧、比照氰化物觀察、送醫;接觸沖水。",
+ ppe:"手套、護目鏡、SCBA(受熱)。"},
+
+{zh:"一氧化鉛",en:"Lead monoxide",alias:"PbO 密陀僧 黃丹",cas:"1317-36-8",un:"",erg:"",tox:null,cat:["concern"],concern:"具食安風險疑慮類",water:false,gas:false,haz:"關注化學物質；鉛化合物(劇毒)",qty:null,
+ use:"鉛玻璃/陶釉、蓄電池、顏料;<b>關注化學物質(曾遭非法添加食品/藥材)</b>。",
+ phys:"黃/紅色固體粉末,無味;不燃;鉛劇毒。",
+ hazard:"關注化學物質;<b>鉛中毒</b>(神經/血液/腎，孩童尤危),粉塵吸入/食入累積;不燃。",
+ fire:"不燃;火場以周邊適用滅火劑,SCBA防鉛煙塵。",
+ spill:"勿揚塵;小心收集密封、防食入。",
+ aid:"吸入/食入移離、漱口、送醫(血鉛檢測);接觸沖洗。",
+ ppe:"防塵口罩/SCBA、手套。"},
+
+{zh:"四氧化三鉛",en:"Lead tetroxide",alias:"Pb3O4 紅丹 鉛丹",cas:"1314-41-6",un:"",erg:"",tox:null,cat:["concern"],concern:"具食安風險疑慮類",water:false,gas:false,haz:"關注化學物質；鉛化合物(劇毒,具氧化性)",qty:null,
+ use:"防鏽紅丹漆、鉛玻璃、蓄電池;<b>關注化學物質(曾遭非法添加)</b>。",
+ phys:"鮮紅色粉末,無味;不燃但具氧化性;鉛劇毒。",
+ hazard:"關注化學物質;<b>鉛中毒</b>累積毒;具氧化性,與可燃物/還原劑受熱反應;粉塵危害。",
+ fire:"本身不燃;移開可燃物,SCBA防鉛煙塵。",
+ spill:"勿揚塵;小心收集密封。",
+ aid:"吸入/食入移離、送醫(血鉛);接觸沖洗。",
+ ppe:"防塵/SCBA、手套。"},
+
+{zh:"β-萘酚 / 2-萘酚",en:"beta-Naphthol",alias:"2-萘酚 β-Naphthol 乙萘酚",cas:"135-19-3",un:"2811",erg:"154",tox:null,cat:["concern"],concern:"具食安風險疑慮類",water:false,gas:false,haz:"關注化學物質；有毒固體",qty:null,
+ use:"染料/顏料中間體、抗氧化劑、防黴;<b>關注化學物質(曾遭非法用於食品/染色)</b>。",
+ phys:"白~粉紅色晶,酚味;可燃;有毒。",
+ hazard:"關注化學物質;有毒(腎/血液溶血、刺激),經皮吸收;可燃,燃燒生刺激煙。",
+ fire:"乾粉、CO₂、泡沫、水霧;SCBA。",
+ spill:"乾式收集、防接觸與流入水體。",
+ aid:"接觸脫除污衣大量沖水;誤食漱口送醫;吸入移離給氧。",
+ ppe:"手套、護目鏡、防護衣。"},
+
+{zh:"海罌粟鹼",en:"Apomorphine",alias:"阿樸嗎啡 Apomorphine",cas:"475-81-0",un:"",erg:"",tox:null,cat:["concern"],concern:"民生議題類",water:false,gas:false,haz:"關注化學物質；藥理活性生物鹼",qty:null,
+ use:"醫藥(帕金森氏症/催吐)成分;<b>關注化學物質(濫用/管理疑慮)</b>。",
+ phys:"白~灰綠色固體,遇光/空氣易氧化變綠;藥理活性強。",
+ hazard:"關注化學物質;強效多巴胺致效劑—噁心嘔吐、低血壓、嗜睡;非火災型物質，以毒理/濫用管理為主。",
+ fire:"周邊火以一般適用滅火劑。",
+ spill:"乾式收集、防接觸。",
+ aid:"接觸/誤食移離、沖洗、送醫。",
+ ppe:"手套、口罩。"},
+
+{zh:"Cybutryne (環丁烴)",en:"Cybutryne (Irgarol 1051)",alias:"Irgarol 三氮𠯤類防污除藻劑",cas:"28159-98-0",un:"",erg:"",tox:null,cat:["concern"],concern:"關注化學物質（環境部公告）",water:false,gas:false,haz:"關注化學物質；水生環境毒性",qty:null,
+ use:"船舶防污漆殺藻劑、除藻劑;<b>關注化學物質(水生環境毒性)</b>。",
+ phys:"白色固體;微溶於水;對水生生物高毒。",
+ hazard:"關注化學物質;<b>水生環境高毒</b>(藻類/水草)且持久;對人刺激。",
+ fire:"周邊火以乾粉/CO₂/水霧;防含氮分解煙。",
+ spill:"乾式收集、<b>防流入水體</b>、圍堵。",
+ aid:"接觸沖洗、送醫。",
+ ppe:"手套、護目鏡。"}
 );
 
 /* ===================== 官方完整列管毒化物清單 =====================
@@ -1381,6 +1661,8 @@ const CHIPS = [
   {key:"water", label:"🚱 禁水/遇水反應", cls:"fire"},
   {key:"oxid",  label:"🔥 氧化劑/反應性", cls:""},
   {key:"haz",   label:"⚖️ 公共危險物品",  cls:""},
+  {key:"material", label:"🔥 材料燃燒毒氣", cls:""},
+  {key:"concern", label:"📛 關注化學物質", cls:""},
 ];
 let activeChip = "all";
 let query = "";
@@ -1397,6 +1679,8 @@ function matchChip(c){
     case"water":return c.water;
     case"oxid":return (c.cat||[]).includes("oxid");
     case"haz":return (!!c.haz && c.haz.indexOf("第")===0);
+    case"material":return (c.cat||[]).includes("material");
+    case"concern":return !!c.concern;
     default:return true;
   }
 }
@@ -1424,6 +1708,7 @@ function flagsHTML(c){
   if(c.water) f+=`<span class="flag water">🚱 禁水/遇水反應</span>`;
   if(c.gas) f+=`<span class="flag fire">💨 氣體</span>`;
   if(c.haz && c.haz.indexOf("第")===0) f+=`<span class="flag haz">公危·${c.haz.split("(")[0]}</span>`;
+  if(c.concern) f+=`<span class="flag concern">📛 關注化學物質</span>`;
   if(c.isLite) f+=`<span class="flag offi">官方清單</span>`;
   return f;
 }
@@ -1455,6 +1740,14 @@ function liteGuide(c){
     ④ 撥打<b>毒災通報 0800-085-119</b> / 消防 <b>119</b> 取得即時指示。</div>`;
 }
 
+/* 關注化學物質區塊 */
+function concernBlock(kind){
+  return `<div class="sec concern"><h4>📛 關注化學物質（環境部公告）</h4>
+    本品經環境部依《毒性及關注化學物質管理法》公告為<b>關注化學物質</b>${kind?`（${kind}）`:""}。
+    運作須<b>申請核可、記錄申報、標示並備置SDS</b>，且<b>禁止網路販賣</b>。
+    <p class="hint" style="margin:6px 0 0">※ 所屬附表類別與「管制濃度」以官方公告附表為準；關注化學物質為毒化物以外之另一管理類別。</p></div>`;
+}
+
 function cardHTML(c,i){
   const o = c.official;
   const ids = [
@@ -1467,7 +1760,7 @@ function cardHTML(c,i){
 
   let body;
   if(c.isLite){
-    body = `${liteGuide(c)}${officialBlock(o)}`;
+    body = `${liteGuide(c)}${officialBlock(o)}${c.concern?concernBlock(c.concern):""}`;
   }else{
     body = `
       <div class="sec fire"><h4>🧯 火災滅火應變</h4>${c.fire}</div>
@@ -1484,7 +1777,7 @@ function cardHTML(c,i){
           <dt>管制量</dt><dd>${c.qty?`<span class="qty-hi">${c.qty}</span>`:"—（非第四類等公危分類，或屬高壓氣體/毒化物另管）"}</dd>
         </dl>
       </div>
-      ${o?officialBlock(o):""}`;
+      ${o?officialBlock(o):""}${c.concern?concernBlock(c.concern):""}`;
   }
 
   return `
@@ -1518,7 +1811,7 @@ function render(){
 function toggleCard(el){ el.parentElement.classList.toggle("open"); }
 function toggleRef(id){
   const el = document.getElementById(id);
-  ["refQty","refGas","refTox","refErg"].forEach(x=>{ if(x!==id) document.getElementById(x).classList.add("hidden"); });
+  ["refQty","refGas","refBurn","refTox","refErg"].forEach(x=>{ if(x!==id) document.getElementById(x).classList.add("hidden"); });
   el.classList.toggle("hidden");
   if(!el.classList.contains("hidden")) el.scrollIntoView({behavior:"smooth",block:"start"});
 }
