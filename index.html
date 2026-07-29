@@ -86,6 +86,9 @@
   .flag.haz{background:#1f3326; color:#86efac;}
   .flag.offi{background:#0e2233; color:#7dd3fc; border:1px solid #1c4a6b;}
   .flag.concern{background:#3a2c0e; color:#ffd98a; border:1px solid #5a4a1e;}
+  .flag.dcnh{background:#2d1b4e; color:#c4b5fd; border:1px solid #4c3585;}
+  .flag.dcnd{background:#0e2f22; color:#6ee7b7; border:1px solid #1a5e42;}
+  .flag.dcnw{background:#3d2408; color:#fdba74; border:1px solid #6b4315;}
   .id-pill.toxno{color:#86efac; border-color:#1f4d33; background:#0c1a12;}
   .card.lite{border-style:dashed; border-color:#2c3e4d;}
   .card.lite .zh{font-size:16px;}
@@ -167,10 +170,11 @@
   </div>
   <div class="searchbox">
     <input id="q" type="search" inputmode="search" autocomplete="off"
-      placeholder="輸入 中/英文名稱、CAS、UN編號…（例：矽烷 / HF / 1017 / 苯）">
+      placeholder="輸入 中/英文名稱、CAS、UN編號…（例：矽烷 / 硅烷 / 75-59-2 / HF / 1017）">
     <button class="clear" id="clearBtn" aria-label="清除">×</button>
   </div>
-  <div class="hint">💡 現場可只記 <b>UN編號</b> 或 <b>名稱</b> 任一即可查；點卡片展開 → 先看紅色「滅火」欄</div>
+  <div class="hint">💡 現場可只記 <b>UN編號</b> 或 <b>名稱</b> 任一即可查；點卡片展開 → 先看紅色「滅火」欄<br>
+  🔑 <b>中文名常有異寫</b>(硅烷=矽烷、高錳酸鉀=過錳酸鉀、四甲基氫氧化銨=氫氧化四甲基銨)，本系統已自動互通(含簡體)；<b>但要確認「是否同一物質」，請一律核對 CAS 號碼</b>——一物一號、國際通用，中文名不是。</div>
 </header>
 
 <div class="layout">
@@ -182,6 +186,7 @@
     <button onclick="toggleRef('refBurn')">🔥 材料燃燒毒氣</button>
     <button onclick="toggleRef('refTox')">☠️ 毒化物 4 類定義</button>
     <button onclick="toggleRef('refErg')">📖 ERG 應變指南說明</button>
+    <button onclick="toggleRef('refDecon')">🧴 敵腐靈/六氟靈 噴濺對照</button>
     <input type="file" id="impFile" accept=".json,application/json" class="hidden">
     <button onclick="document.getElementById('impFile').click()" title="匯入環境部 TOXIC_P_23 最新 JSON 以更新官方清單">🔄 更新官方清單</button>
     <button onclick="toggleMap()">🗺️ 現場地圖/警戒區</button>
@@ -340,6 +345,22 @@
     <p class="hint" style="margin-top:8px">🔑 <b>火場通則</b>：幾乎所有有機物燃燒都生 <b>一氧化碳(CO)＝頭號殺手</b>；<b>含氮</b>材料(PU/尼龍/ABS/羊毛/含氮樹脂)→ <b>氰化氫(HCN)</b>；<b>含氯</b>(PVC)→ HCl＋光氣；<b>含氟</b>(鐵氟龍)→ HF/PFIB；<b>含硫</b>(橡膠)→ SO₂/H₂S。<b>火場昏迷者一律警惕 CO＋HCN 雙重中毒</b>；全程正壓SCBA、上風、含氯/氟煙霧具腐蝕與延遲性肺水腫風險。上述材料可直接於搜尋框輸入(如「PVC」「保麗龍」「鐵氟龍」)查卡片。<b>表列為代表性產物，實際生成種類與比例依溫度、供氧與燃燒條件而異。</b></p>
   </div>
 
+  <div class="ref hidden" id="refDecon">
+    <h3>🧴 化學噴濺除污產品對照：敵腐靈（Diphoterine®）／六氟靈（Hexafluorine®）</h3>
+    <p style="font-size:13px;margin:4px 0 8px;color:#9fb0bf">法國 Prevor 原廠之緊急沖洗液。台灣自 2020 年起消防機關（桃園市消防局率先）、毒災應變隊與科學園區廠商陸續配置。<b>兩者均為第一時間輔助除污，不取代大量清水基準法，更不取代就醫。</b></p>
+    <table class="tbl">
+      <thead><tr><th>噴濺情境</th><th>對應產品</th><th>要點</th></tr></thead>
+      <tbody>
+        <tr><td><b>氫氟酸 / HF / 氟化物</b><br><span style="color:#9fb0bf">氫氟酸(含電子級/DHF/BOE)、混酸蝕刻液(MAE，含HF)、氟化銨</span><br><span style="color:#6ee7b7;font-size:12px">✔ 原廠明列適應症</span></td><td><b style="color:#c4b5fd">六氟靈</b></td><td>同時吸附H⁺並螯合F⁻（結合而非中和，對HF+硝酸等混合酸亦有效）。<b>沖洗後仍應依醫療程序使用葡萄糖酸鈣並送醫</b>。無六氟靈→大量清水≥15分＋鈣劑。<b>敵腐靈非為HF設計，HF一律優先六氟靈</b>。</td></tr>
+        <tr><td><b>遇濕生HF之氟化物氣體</b><br><span style="color:#9fb0bf">氟(F₂)、三氟化氯(ClF₃)、三氟化硼(BF₃)、四氟化矽(SiF₄)、六氟化鎢(WF₆)</span><br><span style="color:#fdba74;font-size:12px">⚠ 本系統推論（徽章標「推論」）</span></td><td><b style="color:#c4b5fd">六氟靈（推論）</b></td><td>此類接觸<b>濕潤組織即水解生成HF</b>，故比照HF處置——惟<b>原廠適應症與各廠牌SDS未逐一列名</b>，屬本系統之化學推論。此類主要暴露途徑為<b>吸入</b>而非噴濺；F₂/ClF₃另有強氧化灼傷。無六氟靈→大量清水持續沖洗＋備鈣劑，並儘速送醫。</td></tr>
+        <tr><td><b>一般腐蝕/刺激性化學</b><br><span style="color:#9fb0bf">酸（硫酸/硝酸/鹽酸/王水/磷酸/醋酸…）、鹼（氫氧化鈉/鉀/銫、氨水、TMAH）、氧化劑（雙氧水/次氯酸鈉/鉻酸/過錳酸鉀/溴）、酚類、甲醛、烷化劑（硫酸二甲酯）、乙醇胺類</span></td><td><b style="color:#6ee7b7">敵腐靈</b></td><td>兩性、高滲透螯合聚合物水溶液，原廠適應症涵蓋酸/鹼/氧化/還原/螯合/溶劑/烷化劑等約600種化學品。<b>黃金1分鐘內使用效果最佳</b>，整瓶沖完仍需就醫。無敵腐靈→大量清水≥15-20分。</td></tr>
+        <tr><td><b>禁水性物質</b><br><span style="color:#9fb0bf">鹼金屬、金屬粉、有機金屬、氨基鈉…（卡片標🚱者）</span></td><td><b style="color:#fdba74">先拂除→大量清水</b></td><td>兩產品皆為水性溶液。<b>先快速拂除/夾除固體殘粒、脫除污染衣物</b>，再以大量清水持續沖洗（以水量壓制反應熱）；金屬鈉/鉀顆粒務必先移除再沖。</td></tr>
+        <tr><td><b>其他（未標示者）</b></td><td>大量清水</td><td>大量清水沖洗≥15-20分；油類/碳氫化合物另以肥皂水清洗；液化氣體凍傷→約40°C溫水回溫，勿摩擦。</td></tr>
+      </tbody>
+    </table>
+    <p class="hint" style="margin-top:8px">⚠️ <b>誠實聲明</b>：敵腐靈/六氟靈之效益證據主要為原廠資料與已發表案例系列（療效方向正面，但無大型隨機對照試驗），故國際上大量清水沖洗仍為基準做法。本表已<b>區分「原廠明列適應症」與「本系統推論」</b>兩級：後者（遇濕生HF之氟化物氣體）徽章標示「推論」，係依水解生成HF之化學事實比照處置，原廠與SDS未逐一列名，使用前請依貴單位醫療/EHS程序確認。眼部噴濺一律優先持續沖洗並送醫。TMAH等具全身毒性者即使無痛感亦須就醫。可於搜尋框輸入「六氟靈」「敵腐靈」列出對應卡片。<br>來源：Prevor 原廠（diphoterine-solution / hexafluorine-solution）、環境部化學知識地圖「消防局採購化災沖洗液 認識敵腐靈與六氟靈」、PubMed 12136973 等文獻。</p>
+  </div>
+
   <div class="count" id="count"></div>
   <div id="list"></div>
 
@@ -450,7 +471,7 @@ const DATA = [
  aid:"吸入：移離、半坐臥、給氧、勿運動、送醫(肺水腫可延遲)。眼/皮膚大量沖水。",
  ppe:"A級防護 + SCBA。"},
 
-{zh:"氯化氫 / 鹽酸",en:"Hydrogen chloride / Hydrochloric acid",alias:"HCl 氫氯酸 鹽酸36%（本卡UN1050/ERG125＝無水HCl氣體；鹽酸水溶液＝UN1789/ERG157）",cas:"7647-01-0",un:"1050",erg:"125",tox:null,cat:["tech","toxic"],water:false,gas:true,haz:"非公共危險物品(腐蝕性)",qty:null,
+{zh:"氯化氫 / 鹽酸",en:"Hydrogen chloride / Hydrochloric acid",alias:"HCl 氫氯酸 鹽酸36% SC-2 HPM 鹽酸雙氧水（本卡UN1050/ERG125＝無水HCl氣體；鹽酸水溶液＝UN1789/ERG157）",cas:"7647-01-0",un:"1050",erg:"125",tox:null,cat:["tech","toxic"],water:false,gas:true,haz:"非公共危險物品(腐蝕性)",qty:null,
  use:"半導體清洗(RCA SC-2)、蝕刻、磊晶氣相清洗。UN1789為鹽酸水溶液。",
  phys:"無水HCl無色發煙氣體、刺鼻；鹽酸為無色~淡黃發煙液。比空氣重。",
  hazard:"強腐蝕、刺激致呼吸道與眼灼傷、肺水腫；遇多數金屬放出氫氣(易燃)。",
@@ -622,7 +643,7 @@ const DATA = [
  aid:"大量沖水、送醫。",
  ppe:"耐酸手套、護目鏡。"},
 
-{zh:"氫氧化四甲基銨",en:"Tetramethylammonium hydroxide",alias:"TMAH 顯影液 NMD-W 2.38%(TOK顯影液即2.38%TMAH)",cas:"75-59-2",un:"1719",erg:"154",tox:null,cat:["tech","toxic"],water:false,gas:false,haz:"非公共危險物品(強鹼·劇毒)",qty:null,
+{zh:"氫氧化四甲基銨",en:"Tetramethylammonium hydroxide",alias:"TMAH 顯影液 NMD-W 2.38%(TOK顯影液即2.38%TMAH) 四甲基氫氧化銨 Tetramethylammonium hydroxide TMAOH 光阻顯影液 矽異方性蝕刻液",cas:"75-59-2",un:"1835",erg:"153",tox:null,cat:["tech","toxic"],water:false,gas:false,haz:"非公共危險物品六類（強鹼腐蝕·具全身急性毒性）；運輸UN1835 四甲基氫氧化銨水溶液·ERG153（&gt;2.5%且&lt;25%＝Class8附屬6.1·PGII；≦2.5%含常見2.38%顯影液＝Class8·PGIII）",qty:null,
  use:"半導體/面板<b>光阻顯影液</b>、矽蝕刻液(常見 2.38% 水溶液)。",
  phys:"無色液，氨味；強鹼腐蝕、<b>具神經/全身急性毒性</b>。",
  hazard:"<b>特殊危險</b>：除強鹼灼傷外，經皮膚吸收可致<b>呼吸肌麻痺、心律不整而猝死</b>(曾有作業致死案例)，大面積接觸即危及生命。",
@@ -979,7 +1000,7 @@ DATA.push(
  aid:"吸入移離給氧、安靜送醫(注意溶血/腎)。",
  ppe:"A級防護 + SCBA。"},
 
-{zh:"三甲基鋁",en:"Trimethylaluminium",alias:"TMA TMAl Al(CH3)3 烷基鋁類（三乙基鋁TEAL 97-93-8、三異丁基鋁TIBA等同屬第三類烷基鋁10公斤·UN3394·ERG135）",cas:"75-24-1",un:"3394",erg:"135",tox:null,cat:["tech"],water:true,gas:false,haz:"第三類 發火性液體及禁水性物質（烷基鋁）",qty:"10 公斤（烷基鋁）",
+{zh:"三甲基鋁",en:"Trimethylaluminium",alias:"TMA TMAl Al(CH3)3 烷基鋁類（三乙基鋁TEAL 97-93-8、三異丁基鋁TIBA等同屬第三類烷基鋁10公斤·UN3051·ERG135）",cas:"75-24-1",un:"3051",erg:"135",tox:null,cat:["tech"],water:true,gas:false,haz:"第三類 發火性液體及禁水性物質（烷基鋁）",qty:"10 公斤（烷基鋁）",
  use:"ALD/CVD 高介電(Al2O3)、MOCVD 之鋁前驅物。",
  phys:"無色發煙液;<b>接觸空氣即自燃、遇水爆炸性反應</b>放甲烷。",
  hazard:"<b>自燃性 + 禁水性</b>:遇空氣自燃、遇水/醇劇烈爆炸放可燃氣;灼傷。",
@@ -1468,7 +1489,7 @@ DATA.push(
  aid:"皮膚/眼<b>大量清水沖洗≧15分</b>;吸入移離給氧;誤食漱口勿催吐;送醫。",
  ppe:"防化手套(丁基)、面罩/護目鏡、防護衣。"},
 
-{zh:"二乙醇胺",en:"Diethanolamine (DEA)",alias:"二乙醇胺 DEA (HOCH2CH2)2NH",cas:"111-42-2",un:"",erg:"153",tox:null,cat:["tech","common"],water:false,gas:false,haz:"第四類 易燃液體－第三石油類（水溶性）",qty:"4,000 公升（第三石油類·水溶性）",
+{zh:"二乙醇胺",en:"Diethanolamine (DEA)",alias:"二乙醇胺 DEA (HOCH2CH2)2NH",cas:"111-42-2",un:"",erg:"153"/*※本品運輸上多不列為危險物品(無UN)；ERG153係依腐蝕/毒性可燃液體比照*/,tox:null,cat:["tech","common"],water:false,gas:false,haz:"第四類 易燃液體－第三石油類（水溶性）",qty:"4,000 公升（第三石油類·水溶性）",
  use:"酸氣吸收、界面活性劑/乳化劑、金屬加工液、水泥添加、化妝品。",
  phys:"白色固體/黏稠液(熔點約28°C),微氨味,吸濕;可燃(閃火點約138°C)、鹼性腐蝕。",
  hazard:"<b>列管毒化物(第4類)</b>;鹼性腐蝕刺激;可燃;<b>與亞硝酸鹽可生成致癌亞硝胺</b>。",
@@ -1765,7 +1786,7 @@ DATA.push(
  aid:"窒息者移至新鮮空氣、給氧;送醫。",
  ppe:"氧濃度偵測;缺氧時SCBA。"},
 
-{zh:"五氯化鉭",en:"Tantalum pentachloride (TaCl5)",alias:"TaCl5 五氯化鉭 ALD前驅物",cas:"7721-01-9",un:"",erg:"154",tox:null,cat:["tech"],water:true,gas:false,haz:"非公共危險物品(腐蝕性·遇水反應)",qty:null,
+{zh:"五氯化鉭",en:"Tantalum pentachloride (TaCl5)",alias:"TaCl5 五氯化鉭 ALD前驅物",cas:"7721-01-9",un:"3260",erg:"154",tox:null,cat:["tech"],water:true,gas:false,haz:"非公共危險物品六類（腐蝕性·遇水反應）；運輸歸UN3260 腐蝕性固體·酸性·無機物n.o.s.·Class8·PGII·ERG154",qty:null,
  use:"<b>半導體 TaN/Ta₂O₅ 阻障/介電層 ALD/CVD 前驅物</b>。",
  phys:"白色潮解針狀晶;<b>遇水/潮氣強烈水解放HCl</b>;不燃。",
  hazard:"<b>遇水放HCl</b>(腐蝕、刺激致肺水腫);灼傷皮膚眼;不燃。",
@@ -1774,7 +1795,7 @@ DATA.push(
  aid:"吸入移離給氧;接觸大量沖水;送醫。",
  ppe:"防酸手套、護目鏡/面罩、SCBA(發煙時)。"},
 
-{zh:"五氯化鈮",en:"Niobium pentachloride (NbCl5)",alias:"NbCl5 五氯化鈮 ALD前驅物",cas:"10026-12-7",un:"",erg:"154",tox:null,cat:["tech"],water:true,gas:false,haz:"非公共危險物品(腐蝕性·遇水反應)",qty:null,
+{zh:"五氯化鈮",en:"Niobium pentachloride (NbCl5)",alias:"NbCl5 五氯化鈮 ALD前驅物",cas:"10026-12-7",un:"3260",erg:"154",tox:null,cat:["tech"],water:true,gas:false,haz:"非公共危險物品(腐蝕性·遇水反應)",qty:null,
  use:"半導體 NbN/介電層 ALD/CVD 前驅物;超導/塗層材料。",
  phys:"黃色潮解晶;<b>遇水/空氣水解放HCl</b>(常含NbOCl₃);不燃。",
  hazard:"<b>遇水放HCl</b>(腐蝕刺激);灼傷;不燃。",
@@ -1783,7 +1804,7 @@ DATA.push(
  aid:"吸入移離給氧;接觸大量沖水;送醫。",
  ppe:"防酸手套、護目鏡/面罩、SCBA(發煙時)。"},
 
-{zh:"四氯化鉿",en:"Hafnium tetrachloride (HfCl4)",alias:"HfCl4 四氯化鉿 high-k ALD前驅物",cas:"13499-05-3",un:"",erg:"154",tox:null,cat:["tech"],water:true,gas:false,haz:"非公共危險物品(腐蝕性·遇水反應)",qty:null,
+{zh:"四氯化鉿",en:"Hafnium tetrachloride (HfCl4)",alias:"HfCl4 四氯化鉿 high-k ALD前驅物",cas:"13499-05-3",un:"",erg:"154"/*※供應商SDS多列「非危險物品」故un留空；ERG154係比照同類金屬氯化物*/,tox:null,cat:["tech"],water:true,gas:false,haz:"非公共危險物品(腐蝕性·遇水反應)",qty:null,
  use:"<b>半導體 high-k 閘極介電(HfO₂)ALD/CVD 氯化物前驅物</b>(另有胺基鉿TEMAH/TDMAH類)。",
  phys:"白色潮解晶;<b>遇水/潮氣水解放HCl</b>;不燃。",
  hazard:"<b>遇水放HCl</b>(腐蝕刺激);灼傷;不燃。",
@@ -1858,7 +1879,7 @@ DATA.push(
  aid:"吸入裂解煙霧比照HF:移離給氧、觀察延遲性肺水腫、送醫;皮膚接觸沖洗。",
  ppe:"一般手套護目鏡;受熱/火場SCBA。"},
 
-{zh:"潤滑油 / 液壓油",en:"Lubricating / Hydraulic oil",alias:"潤滑油 液壓油 齒輪油 THK AFF 機油 導軌油",cas:"",un:"",erg:"128",tox:null,cat:["common"],water:false,gas:false,haz:"第四類 易燃液體－第四石油類（礦物油系，閃火點200~250°C）",qty:"6,000 公升（第四石油類；閃火點250°C以上或動植物油另計）",
+{zh:"潤滑油 / 液壓油",en:"Lubricating / Hydraulic oil",alias:"潤滑油 液壓油 齒輪油 THK AFF 機油 導軌油",cas:"",un:"",erg:"128",tox:null,cat:["common"],water:false,gas:false,haz:"第四類 易燃液體－第四石油類（礦物油系，閃火點200~250°C）※運輸上多非危險物品(無UN)；ERG128為比照，惟該指南「極低閃火點」之警語不適用本品",qty:"6,000 公升（第四石油類；閃火點250°C以上或動植物油另計）",
  use:"設備潤滑、液壓系統、導軌/軸承（廠內各式潤滑油脂）。",
  phys:"黃~棕色油狀液,油味;閃火點高(多200°C以上)但<b>霧化或吸附於保溫材時極易點燃</b>。",
  hazard:"可燃;<b>高壓液壓管洩漏形成油霧遇熱面即燃(常見設備火源)</b>;吸附多孔保溫材後自燃點大幅下降;燃燒濃煙CO。",
@@ -2385,7 +2406,7 @@ DATA.push(
  aid:"移離、脫污衣沖水、發紺給氧送醫(亞甲藍)。",
  ppe:"防滲手套、防護衣。"},
 
-{zh:"二苯甲烷二異氰酸酯 (MDI)",en:"Methylene diphenyl diisocyanate",alias:"MDI 4,4'-二異氰酸二苯甲烷 聚合MDI PU發泡原料",cas:"101-68-8",un:"",erg:"156",tox:null,cat:["tech","common"],water:true,gas:false,haz:"視閃火點屬第四類第三/四石油類（單體MDI閃火點約200°C，依SDS）；特定化學物質",qty:"依閃火點判定（約200°C者為第四石油類6,000公升）",
+{zh:"二苯甲烷二異氰酸酯 (MDI)",en:"Methylene diphenyl diisocyanate",alias:"MDI 4,4'-二異氰酸二苯甲烷 聚合MDI PU發泡原料",cas:"101-68-8",un:"2489",erg:"156",tox:null,cat:["tech","common"],water:true,gas:false,haz:"視閃火點屬第四類第三/四石油類（單體MDI閃火點約200°C，依SDS）；特定化學物質",qty:"依閃火點判定（約200°C者為第四石油類6,000公升）",
  use:"<b>PU發泡/彈性體/接著劑最大宗異氰酸酯</b>(與TDI並列)。",
  phys:"白~淡黃固體/黏液(聚合MDI);低揮發;遇水緩慢反應放CO₂。",
  hazard:"<b>呼吸道致敏(氣喘)—PU業職業病主因</b>;遇水/胺放熱放CO₂密閉增壓;燃燒放HCN/NOx/異氰酸酯煙。",
@@ -2847,7 +2868,7 @@ DATA.push(
  aid:"<b>即使無症狀:絕對靜臥、給氧、送醫留觀≧24h</b>。",
  ppe:"正壓SCBA。"},
 
-{zh:"禁用致癌芳香胺類（聯苯胺等）",en:"Banned carcinogenic aromatic amines",alias:"聯苯胺 β-萘胺 4-胺基聯苯 4-硝基聯苯 偶氮染料分解物",cas:"92-87-5,91-59-8,92-67-1",un:"",erg:"153",tox:null,cat:["toxic"],water:false,gas:false,haz:"特定化學物質甲類（禁止製造/輸入/使用）；查察重點：違規使用與老舊庫存",qty:null,
+{zh:"禁用致癌芳香胺類（聯苯胺等）",en:"Banned carcinogenic aromatic amines",alias:"聯苯胺 β-萘胺 4-胺基聯苯 4-硝基聯苯 偶氮染料分解物",cas:"92-87-5,91-59-8,92-67-1",un:"",erg:"153",tox:null,cat:["toxic"],water:false,gas:false,haz:"特定化學物質甲類（禁止製造/輸入/使用）；查察重點：違規使用與老舊庫存 ※本卡為群組：各品項UN不同(聯苯胺UN1885·Class6.1·ERG153)，故un欄留空、ERG採同類共通值153",qty:null,
  use:"<b>已全面禁用</b>之染料中間體——查察重點為老舊染整/化工廠庫存與違規偶氮染料。",
  phys:"白~紅棕色結晶(氧化變色);低揮發。",
  hazard:"<b>確定人類膀胱致癌物(IARC 1)——經皮吸收為主要途徑</b>;燃燒放NOx毒煙。",
@@ -2856,11 +2877,11 @@ DATA.push(
  aid:"接觸脫污衣大量沖洗、記錄暴露、健康追蹤(尿液膀胱篩檢)。",
  ppe:"防滲全身衣、SCBA(粉塵)。"},
 
-{zh:"烷基汞化物",en:"Alkyl mercury compounds",alias:"甲基汞 二甲基汞 乙基汞 有機汞",cas:"593-74-8",un:"",erg:"151",tox:null,cat:["toxic"],water:false,gas:false,haz:"特定化學物質（劇毒有機汞）※二甲基汞593-74-8為代表",qty:null,
+{zh:"烷基汞化物",en:"Alkyl mercury compounds",alias:"甲基汞 二甲基汞 乙基汞 有機汞",cas:"593-74-8",un:"2929",erg:"131",tox:null,cat:["toxic"],water:false,gas:false,haz:"特定化學物質（劇毒有機汞）※本卡以二甲基汞593-74-8為代表：UN2929 毒性易燃有機液體·Class6.1(附屬風險3)·ERG131（<b>閃火點約5°C，屬易燃液體</b>）；<b>固態</b>有機汞鹽類(如甲基汞氯化物)另歸UN2024/2025汞化合物n.o.s.·ERG151(不燃)——查ERG時務必先確認型態",qty:null,
  use:"實驗室標準品(極少量)、歷史農藥/工業(禁用;水俁病物質)。",
- phys:"二甲基汞=無色揮發液;<b>穿透性極強</b>。",
+ phys:"二甲基汞=無色揮發液,微甜味;<b>閃火點約5°C、蒸氣壓高(20°C約50~82 mmHg)——屬易燃液體且極易吸入</b>;<b>穿透性極強</b>。",
  hazard:"<span class='forbid'>極端神經毒:二甲基汞數滴穿透乳膠手套致死(1997年Wetterhahn教授事故)——乳膠/PVC手套無防護力</span>;延遲數月發病、不可逆。",
- fire:"周邊火適用滅火劑;汞蒸氣→SCBA。",
+ fire:"<b>二甲基汞本身即易燃(閃火點約5°C)，切勿依「有機汞＝不燃」處置</b>:小火用乾粉/CO₂/抗醇泡沫,水霧僅供冷卻容器。<b>受熱/燃燒生成劇毒汞蒸氣</b>—全程正壓SCBA、上風、嚴控煙霧擴散。",
  spill:"撤離、專業處理;絕對禁止徒手/一般手套接觸。",
  aid:"任何疑似接觸立即就醫(螯合治療評估)、長期追蹤。",
  ppe:"高防護層壓手套(SilverShield類)+SCBA;實務上=専業團隊。"},
@@ -3182,6 +3203,324 @@ DATA.push(
  ppe:"防酸全身衣+SCBA。"}
 );
 
+/* ---------- 批次11：表7-3 禁水性物質補列（烷基/有機金屬、金屬氫化物-醯胺、高級矽烷·硼烷、汞齊·合金、金屬粉、催化/自熱物） ----------
+   資料原則：CAS/UN/ERG僅填可查證者；無專屬編號者留空並於haz註明參照或通用編號。
+   四甲基鉛、鉑黑、黃原酸鹽依實際化學性質water:false並說明（表7-3列入但非典型遇水劇烈反應）。 */
+DATA.push(
+{zh:"二乙基氯化鋁",en:"Diethylaluminium chloride (DEAC)",alias:"二乙基氯化鋁 氯化二乙基鋁 DEAC (C2H5)2AlCl Et2AlCl",cas:"96-10-6",un:"3052",erg:"135",tox:null,cat:["oxid","tech"],water:true,gas:false,haz:"第三類 發火性液體及禁水性物質（烷基鋁）；UN3052 烷基鋁鹵化物·ERG135",qty:"10 公斤（第三類 烷基鋁）",
+ use:"齊格勒-納塔（Ziegler-Natta）聚烯烴觸媒之共觸媒、有機合成還原／烷基化劑。",
+ phys:"無色至淡黃透明液體；<b>自燃性</b>（接觸空氣即冒煙起火），遇水劇烈反應。常以烴類溶劑稀釋運送。",
+ hazard:"接觸空氣自燃；<b>遇水／濕氣劇烈反應放出乙烷等可燃氣並起火</b>；與醇、胺、鹵素反應激烈；燃燒生成氧化鋁與氯化氫刺激煙。",
+ fire:"<span class='forbid'>嚴禁用水、泡沫</span>。以<b>乾砂、D類乾粉、膨脹蛭石覆蓋窒息</b>；容器受熱以大量水霧由遠端冷卻未著火之容器外壁（勿觸及洩漏物）。",
+ spill:"隔離除火源、關斷來源；乾砂／乾粉覆蓋，惰性氣體置換，禁水沖洗；小心復燃。",
+ aid:"皮膚／眼灼傷：先拂除殘留再以大量清水沖洗≥15分並送醫；吸入煙霧移至新鮮空氣、給氧。",
+ ppe:"抗閃焰防火化學衣＋正壓SCBA；防火手套。"},
+
+{zh:"三丙基鋁",en:"Tripropylaluminium",alias:"三丙基鋁 三正丙基鋁 TPA Al(C3H7)3 (C3H7)3Al",cas:"102-67-0",un:"3051",erg:"135",tox:null,cat:["oxid","tech"],water:true,gas:false,haz:"第三類 發火性液體及禁水性物質（烷基鋁）；UN3051 烷基鋁類·ERG135",qty:"10 公斤（第三類 烷基鋁）",
+ use:"聚烯烴觸媒共觸媒、有機金屬合成試劑。",
+ phys:"無色發煙液體；<b>強自燃性</b>（接觸空氣立即起火），遇水爆發性反應。",
+ hazard:"接觸空氣即自燃；<b>遇水劇烈放出丙烷等可燃氣並起火／爆炸</b>；與含活性氫物（水／醇／胺／酸）猛烈反應；燃燒生成氧化鋁白煙。",
+ fire:"<span class='forbid'>嚴禁用水、泡沫、鹵素滅火劑</span>。乾砂／D類乾粉／膨脹蛭石覆蓋窒息；遠端水霧冷卻鄰近容器外壁。",
+ spill:"隔離、除火源；乾粉／乾砂覆蓋，惰氣置換，禁水；防復燃。",
+ aid:"灼傷：拂除殘留後大量清水沖洗並送醫；吸入移離給氧。",
+ ppe:"抗閃焰防火化學衣＋正壓SCBA。"},
+
+{zh:"四硼烷",en:"Tetraborane(10)",alias:"四硼烷 丁硼烷 B4H10 ※表7-3稱「四硼酸」為誤名（實為硼烷非硼酸）",cas:"18283-93-7",un:"",erg:"119",tox:null,cat:["oxid","tech"],water:true,gas:true,haz:"自燃性／遇水反應之硼氫化物氣體（第2類）；無substance-specific UN，本卡ERG採119＝毒性可燃自燃氣（同二硼烷UN1911；五硼烷UN1380）",qty:"非公危六類具名（高毒易燃硼氫化物）",
+ use:"實驗室硼氫化學研究、特殊硼薄膜／合成前驅物（罕用、極不穩定）。",
+ phys:"無色氣體（沸點約18°C，易液化），噁心氣味；不穩定、<b>自燃性</b>、遇水分解。",
+ hazard:"極易燃、可自燃；<b>遇水／潮氣分解放氫並可能起火</b>；受熱／衝擊易分解（含爆炸之虞）；蒸氣有毒、刺激呼吸道。",
+ fire:"關斷氣源優先；未止漏前<span class='forbid'>勿貿然滅火焰</span>（防氣體積聚復燃爆炸）；水霧冷卻鋼瓶、<b>但勿將水射入洩漏源</b>；乾粉／CO₂撲滅局部火。",
+ spill:"大範圍隔離、上風、驅離低窪；正壓SCBA止漏；嚴防水接觸洩漏源。",
+ aid:"吸入：移至新鮮空氣、給氧、觀察肺水腫（可能延遲）、送醫。",
+ ppe:"正壓SCBA＋抗閃焰防護。"},
+
+{zh:"鋯粉",en:"Zirconium powder",alias:"鋯粉 鋯金屬粉 Zr粉 Zr",cas:"7440-67-7",un:"2008",erg:"135",tox:null,cat:["oxid","tech","common"],water:true,gas:false,haz:"第二類 易燃固體－金屬粉（乾鋯粉UN2008·ERG135自燃性／濕潤鋯粉UN1358·ERG170）",qty:"第一級100／第二級500公斤（依CNS 15030分類）",
+ use:"煙火／閃光劑、火工品、真空管吸氣劑（getter）、特殊合金、觸媒。",
+ phys:"深灰／黑色金屬粉；乾燥細粉<b>自燃性</b>（受摩擦、靜電、受熱即可能起火），粉塵可爆。常以水或惰性液潤濕保存。",
+ hazard:"乾粉自燃、<b>粉塵爆炸</b>危險；受熱與水蒸氣／水反應放氫；燃燒溫度極高、火焰幾近無色不易察覺；與氧化劑劇烈反應。",
+ fire:"<span class='forbid'>嚴禁用水、CO₂、泡沫、鹵素滅火劑</span>（高溫金屬與水／CO₂反應加劇）。以<b>D類金屬火專用乾粉（氯化鈉／石墨基）或乾砂緩慢覆蓋窒息</b>；勿攪動揚塵。",
+ spill:"避免揚塵與火花；以工具輕覆濕砂／D類乾粉、保持濕潤，惰性容器盛裝；禁用壓縮空氣清掃。",
+ aid:"皮膚灼傷以大量清水降溫（針對灼傷非撲滅金屬火）；吸入粉塵移離、給氧、送醫。",
+ ppe:"抗靜電防火服、防塵面罩／SCBA、接地防靜電。"},
+
+{zh:"鈉汞齊",en:"Sodium amalgam",alias:"鈉汞齊 鈉汞 汞齊 Na-Hg NaHg",cas:"11110-52-4",un:"2813",erg:"138",tox:null,cat:["oxid","toxic"],water:true,gas:false,haz:"遇水反應物（含鈉·遇水放氫）＋汞劇毒；運輸歸UN2813 遇水反應固體n.o.s.·ERG138（Class4.3）",qty:"—（依含鈉量與型態認定；汞毒性另受毒化物／職安規範）",
+ use:"有機合成之溫和還原劑（Na-Hg還原）、電解／實驗室製鹼。",
+ phys:"銀灰色固體或糊狀（低鈉含量者近液態汞合金）；含金屬鈉<b>遇水反應</b>；含汞、<b>汞蒸氣有毒</b>。",
+ hazard:"其中之鈉<b>遇水放氫並生成NaOH（放熱、可能起火）</b>；同時釋出／殘留<b>汞（劇毒，可經皮膚與蒸氣吸收，傷腦腎神經）</b>；受熱汞蒸氣上升。",
+ fire:"<span class='forbid'>禁水、禁CO₂／泡沫</span>（鈉部分遇水／CO₂反應）；乾砂／D類乾粉覆蓋窒息；<b>火場另生汞蒸氣毒煙，全程SCBA、上風</b>。",
+ spill:"禁水；乾砂／乾粉覆蓋，惰性密閉容器收集（防汞逸散）；汞污染區依汞洩漏程序處理、防蒸氣。",
+ aid:"皮膚接觸拂除後大量清水沖洗；<b>疑汞暴露者送醫評估（血／尿汞）</b>；吸入汞蒸氣移離給氧送醫。",
+ ppe:"防火服＋正壓SCBA；防汞滲透手套；汞蒸氣偵測。"},
+
+{zh:"鉀鈉合金",en:"Potassium sodium alloy (NaK)",alias:"鉀鈉合金 鈉鉀合金 NaK K-Na",cas:"11135-81-2",un:"1422",erg:"138",tox:null,cat:["oxid"],water:true,gas:false,haz:"第三類 發火性液體、發火性固體及禁水性物質（鉀鈉合金）；UN1422·ERG138",qty:"10 公斤（第三類 鉀／鈉）",
+ use:"高溫熱交換／反應器冷卻媒、有機合成強還原劑、除氧乾燥劑。",
+ phys:"銀白色<b>液態金屬</b>（多種比例於常溫為液體）；<b>強自燃性、遇水爆發性反應</b>，較鈉、鉀更活潑。",
+ hazard:"<b>遇水／潮氣爆炸性反應</b>放氫並瞬間起火（生成KOH／NaOH強鹼）；接觸空氣可自燃；與鹵素、酸、含氧溶劑劇烈反應；濺灑液滴到處起火。",
+ fire:"<span class='forbid'>絕對禁水、禁泡沫、禁CO₂、禁鹵素滅火劑</span>。以<b>D類乾粉（碳酸鈉／石墨）或乾砂輕覆窒息</b>；遠端水霧僅用於冷卻未污染之鄰近設施。",
+ spill:"除火源、禁水；乾粉／乾砂覆蓋，惰性氣體保護，專人以無水程序收集於煤油／惰液中。",
+ aid:"皮膚灼傷（鹼＋熱）：拂除後大量清水長時間沖洗、送醫；眼睛大量沖水急送醫。",
+ ppe:"抗閃焰防火服、面罩、正壓SCBA；防鹼手套。"},
+
+{zh:"三甲基鉈",en:"Trimethylthallium",alias:"三甲基鉈 TMT Tl(CH3)3 (CH3)3Tl",cas:"3003-15-4",un:"3394",erg:"135",tox:null,cat:["oxid","tech","toxic"],water:true,gas:false,haz:"第三類 有機金屬化合物（禁水性）；劇毒鉈化合物 ※UN3394為有機金屬自燃遇水通用編號（非本物質專屬）",qty:"第一級10／第二級50／第三級300公斤（第三類 有機金屬化合物）",
+ use:"含鉈化合物半導體MOCVD前驅物（罕用）、有機金屬合成。",
+ phys:"無色液體；<b>自燃性、遇水反應</b>；<b>受熱（約>90°C）易爆炸分解</b>；鉈化合物劇毒。",
+ hazard:"接觸空氣自燃、遇水放甲烷起火；<b>鉈為劇毒（累積性，傷神經、脫髮，致死劑量低）可經皮膚吸收</b>；受熱具爆炸性。",
+ fire:"<span class='forbid'>禁水</span>；乾砂／D類乾粉覆蓋窒息；<b>燃燒生成劇毒氧化鉈煙，全程SCBA、上風、大範圍警戒</b>。",
+ spill:"禁水；乾粉／乾砂覆蓋，惰氣，密閉收集（防鉈污染擴散）；防復燃。",
+ aid:"皮膚接觸拂除後大量清水沖洗、<b>立即送醫（鉈中毒可用普魯士藍解毒，須專科處置）</b>；吸入移離給氧送醫。",
+ ppe:"A級全密封化學防護＋正壓SCBA（防鉈滲透）。"},
+
+{zh:"三甲基銻",en:"Trimethylstibine (Trimethylantimony)",alias:"三甲基銻 三甲基䏲 TMSb Sb(CH3)3 (CH3)3Sb",cas:"594-10-5",un:"3394",erg:"135",tox:null,cat:["oxid","tech","toxic"],water:true,gas:false,haz:"第三類 有機金屬化合物（發火性液體·禁水性）；銻毒性 ※UN3394為有機金屬自燃遇水通用編號（非專屬）",qty:"第一級10／第二級50／第三級300公斤（第三類 有機金屬化合物）",
+ use:"含銻化合物半導體（InSb／GaSb等）MOCVD／磊晶之銻前驅物、有機合成。",
+ phys:"無色發煙液體（沸點約81°C），惡臭；<b>自燃性</b>（接觸空氣冒煙起火），遇水反應；蒸氣有毒。",
+ hazard:"接觸空氣自燃、遇水放甲烷起火；<b>銻及其燃燒生成之氧化銻煙有毒</b>（刺激呼吸道、類砷樣毒性）；與氧化劑劇烈反應。",
+ fire:"<span class='forbid'>禁水</span>；乾砂／D類乾粉覆蓋窒息；燃燒生成氧化銻毒煙，SCBA、上風。",
+ spill:"禁水；乾粉／乾砂覆蓋，惰氣，密閉收集；防復燃與揚塵。",
+ aid:"吸入移離給氧送醫；皮膚／眼接觸拂除後大量清水沖洗送醫。",
+ ppe:"防火化學防護＋正壓SCBA。"},
+
+{zh:"三乙基銻",en:"Triethylstibine (Triethylantimony)",alias:"三乙基銻 TESb Sb(C2H5)3 (C2H5)3Sb ※表7-3標式Sb(C2H5)2疑漏標，正確為(C2H5)3Sb",cas:"617-85-6",un:"3394",erg:"135",tox:null,cat:["oxid","tech","toxic"],water:true,gas:false,haz:"第三類 有機金屬化合物（發火性液體·禁水性）；銻毒性 ※UN3394通用編號（非專屬）",qty:"第一級10／第二級50／第三級300公斤（第三類 有機金屬化合物）",
+ use:"含銻化合物半導體MOCVD前驅物、有機合成。",
+ phys:"無色至淡黃液體；<b>自燃性</b>、遇水反應；惡臭、蒸氣有毒。",
+ hazard:"接觸空氣自燃、遇水放乙烷起火；燃燒生成<b>有毒氧化銻煙</b>；與氧化劑激烈反應。",
+ fire:"<span class='forbid'>禁水</span>；乾砂／D類乾粉覆蓋；氧化銻毒煙，SCBA、上風。",
+ spill:"禁水；乾粉／乾砂覆蓋，惰氣密閉收集；防復燃。",
+ aid:"吸入移離給氧送醫；皮膚／眼拂除後大量清水沖洗送醫。",
+ ppe:"防火化學防護＋正壓SCBA。"},
+
+{zh:"二乙基鋅",en:"Diethylzinc (DEZ)",alias:"二乙基鋅 DEZ DEZn Zn(C2H5)2 (C2H5)2Zn",cas:"557-20-0",un:"1366",erg:"135",tox:null,cat:["oxid","tech"],water:true,gas:false,haz:"第三類 有機金屬化合物（發火性液體·禁水性）；UN1366 二乙基鋅·ERG135",qty:"第一級10／第二級50／第三級300公斤（第三類 有機金屬化合物）",
+ use:"<b>半導體ALD/CVD鋅前驅物、ZnO／摻雜薄膜</b>；聚合觸媒、有機合成烷基化劑；文物脫酸。",
+ phys:"無色透明液體；<b>強自燃性</b>（接觸空氣立即起火），<b>遇水劇烈反應</b>。常以稀釋液運送。",
+ hazard:"接觸空氣即自燃；<b>遇水／潮氣爆發性放乙烷並起火</b>；與醇、酸、鹵素、氧化劑劇烈反應；燃燒生成氧化鋅白煙。",
+ fire:"<span class='forbid'>嚴禁用水、泡沫、CO₂、鹵素滅火劑</span>。以<b>乾砂、D類乾粉、膨脹蛭石覆蓋窒息</b>；遠端水霧冷卻未著火容器外壁。",
+ spill:"隔離、除火源、關來源；乾粉／乾砂覆蓋，惰性置換，禁水；防復燃。",
+ aid:"皮膚／眼灼傷拂除後大量清水沖洗≥15分並送醫；吸入氧化鋅煙（金屬煙熱）移離給氧、送醫。",
+ ppe:"抗閃焰防火化學衣＋正壓SCBA。"},
+
+{zh:"二甲基鋅",en:"Dimethylzinc (DMZ)",alias:"二甲基鋅 DMZ DMZn Zn(CH3)2 (CH3)2Zn",cas:"544-97-8",un:"1370",erg:"135",tox:null,cat:["oxid","tech"],water:true,gas:false,haz:"第三類 有機金屬化合物（發火性液體·禁水性）；UN1370 二甲基鋅·ERG135",qty:"第一級10／第二級50／第三級300公斤（第三類 有機金屬化合物）",
+ use:"<b>半導體ALD/CVD/MOCVD鋅前驅物（ZnO、含鋅薄膜、摻雜）</b>、有機合成甲基化劑。",
+ phys:"無色揮發性液體（沸點約46°C）；<b>強自燃性</b>，揮發蒸氣即可自燃，<b>遇水劇烈反應</b>。",
+ hazard:"接觸空氣自燃、蒸氣亦易燃爆；<b>遇水爆發性放甲烷起火</b>；與氧化劑／含活性氫物劇烈反應；燃燒生成氧化鋅煙。",
+ fire:"<span class='forbid'>嚴禁用水、泡沫、CO₂、鹵素滅火劑</span>。乾砂／D類乾粉／膨脹蛭石覆蓋窒息；遠端冷卻鄰近容器。",
+ spill:"隔離除火源；乾粉／乾砂覆蓋，惰氣，禁水；高揮發性注意蒸氣自燃。",
+ aid:"皮膚／眼灼傷拂除後大量清水沖洗送醫；吸入移離給氧送醫。",
+ ppe:"抗閃焰防火化學衣＋正壓SCBA。"},
+
+{zh:"四甲基鉛",en:"Tetramethyllead (TML)",alias:"四甲基鉛 TML 四甲鉛 Pb(CH3)4 (CH3)4Pb",cas:"75-74-1",un:"1649",erg:"152",tox:null,cat:["toxic","common"],water:false,gas:false,haz:"第四類 易燃液體－第三石油類；劇毒有機鉛（UN1649 抗震劑混合物·Class6.1·ERG152，同四乙基鉛；ERG131係UN3483「易燃型」抗震劑）※非典型禁水性，見說明",qty:"2,000 公升（第四類 第三石油類·非水溶性）",
+ use:"（歷史上）汽油抗震劑；有機合成。與四乙基鉛同屬有機鉛抗震混合物。",
+ phys:"無色油狀液體、微甜；可燃；<b>劇毒有機鉛</b>，可經皮膚吸收與揮發吸入。",
+ hazard:"<b>劇毒（有機鉛，攻擊中樞神經，可經完好皮膚吸收）</b>；可燃，受熱／燃燒生成劇毒氧化鉛煙與鉛塵；<b>與四乙基鉛同，並非強遇水反應物</b>（表7-3與其他四烷基鉛併列，實務主要危害為毒性與易燃）。",
+ fire:"乾粉、CO₂、泡沫、水霧皆可（此品非禁水）；<b>燃燒生成劇毒鉛煙，全程SCBA、上風</b>；水霧冷卻容器。",
+ spill:"隔離、除火源；吸附材圍堵收集；<b>防皮膚接觸與蒸氣吸入</b>；防止進入水體。",
+ aid:"<b>皮膚接觸立即大量肥皂水沖洗（防經皮吸收）</b>、脫除污染衣物；吸入移離給氧；儘速送醫（有機鉛中毒）。",
+ ppe:"防有機鉛滲透化學防護服＋正壓SCBA；抗滲手套。"},
+
+{zh:"氨基鈉",en:"Sodium amide (Sodamide)",alias:"氨基鈉 胺基鈉 氨基化鈉 鈉醯胺 NaNH2",cas:"7782-92-5",un:"1390",erg:"139",tox:null,cat:["oxid"],water:true,gas:false,haz:"第三類 禁水性物質（鹼金屬醯胺）；UN1390 鹼金屬醯胺·ERG139",qty:"第一級10／第二級50／第三級300公斤（第三類 禁水性物質·依CNS 15030分類）",
+ use:"有機合成強鹼／脫氫劑（製靛藍、疊氮化鈉、炔化物）、氨解反應。",
+ phys:"白色至灰／橄欖綠固體（氧化易變色）；<b>遇水劇烈反應</b>；<b>久置空氣氧化後可能生成對衝擊敏感之黃／棕色過氧化物（有爆炸危險）</b>。",
+ hazard:"<b>遇水劇烈反應放氨氣並生成NaOH（放熱、可能起火）</b>；<b>變質（黃棕色）樣品受摩擦／衝擊可能爆炸</b>；與含鹵、含羰基物反應激烈；粉塵刺激腐蝕。",
+ fire:"<span class='forbid'>嚴禁用水、泡沫、CO₂</span>。以<b>乾砂、D類乾粉、乾燥碳酸鈉覆蓋窒息</b>；分解釋出氨氣，SCBA、上風。",
+ spill:"禁水；乾砂／乾粉覆蓋，惰性乾燥環境收集；<b>變色（黃棕）樣品極危險、勿摩擦衝擊、由專人處理</b>。",
+ aid:"皮膚／眼灼傷（鹼＋氨）大量清水長時間沖洗、送醫；吸入氨氣移離給氧、送醫。",
+ ppe:"防鹼防火化學防護＋正壓SCBA；防塵。"},
+
+{zh:"氨基鎂",en:"Magnesium amide",alias:"氨基鎂 胺基鎂 氨基化鎂 Mg(NH2)2",cas:"7803-54-5",un:"2813",erg:"138",tox:null,cat:["oxid"],water:true,gas:false,haz:"遇水反應物（金屬醯胺，無金屬-碳鍵故非有機金屬）；運輸歸UN2813 遇水反應固體n.o.s.·ERG138（Class4.3）；亦屬儲氫研究材料",qty:"—（禁水性物質；非附表一具名，依實際危害與CNS 15030認定）",
+ use:"儲氫材料／固態氨化學研究、有機金屬合成（罕見工業品）。",
+ phys:"白色固體；<b>遇水反應</b>放氨氣；對潮氣敏感。",
+ hazard:"<b>遇水／潮氣分解放氨氣（放熱）</b>；與酸、氧化劑反應；粉塵刺激；受熱分解。",
+ fire:"<span class='forbid'>禁水</span>；乾砂／D類乾粉／乾碳酸鈉覆蓋窒息；分解放氨氣，SCBA、上風。",
+ spill:"禁水；乾燥惰性環境以乾粉／乾砂覆蓋收集，密閉防潮。",
+ aid:"皮膚／眼接觸大量清水沖洗、送醫；吸入氨氣移離給氧、送醫。",
+ ppe:"防火化學防護＋SCBA；防塵。"},
+
+{zh:"二矽烷 / 乙矽烷",en:"Disilane",alias:"二矽烷 乙矽烷 Si2H6 ※表7-3稱「二氫化矽」；系統另有一矽烷SiH4見「矽烷」卡",cas:"1590-87-0",un:"3553",erg:"116",tox:null,cat:["oxid","tech"],water:true,gas:true,haz:"第2.1類自燃性可燃氣體（不穩定）；UN3553 二矽烷·ERG116（高壓氣體範疇·非公危六類）",qty:"—（屬高壓氣體／特殊氣體管理，非六類）",
+ use:"<b>半導體低溫磊晶／CVD矽薄膜（較SiH4沉積溫度低、速率高）</b>、SiGe磊晶。",
+ phys:"無色氣體（沸點約-14°C），刺鼻；<b>自燃性</b>（接觸空氣即可能自燃），遇水／鹼分解。",
+ hazard:"<b>極易燃、自燃性</b>；遇空氣起火、遇氧化劑爆炸；<b>遇水／潮氣分解放氫並生成SiO₂</b>；蒸氣刺激呼吸道；鋼瓶受熱有BLEVE之虞。",
+ fire:"<b>首要遠端關閉氣源</b>；未止漏前<span class='forbid'>勿滅火焰</span>（防氣體積聚復燃爆炸）；大量水霧／灑水<b>冷卻鋼瓶及周邊</b>（勿射入洩漏口），待氣源耗盡。",
+ spill:"立即疏散、隔離、上風；正壓SCBA由閥源止漏，避免火花與靜電。",
+ aid:"吸入：移至新鮮空氣、保暖、給氧、送醫。",
+ ppe:"正壓SCBA＋抗閃焰防護。"},
+
+{zh:"三矽烷 / 丙矽烷",en:"Trisilane",alias:"三矽烷 丙矽烷 Si3H8 ※表7-3稱「三氫化矽」",cas:"7783-26-8",un:"3194",erg:"135",tox:null,cat:["oxid","tech"],water:true,gas:false,haz:"第三類 發火性液體（自燃性矽烷·遇水反應）；運輸歸UN3194 無機自燃液體n.o.s.·ERG135（無substance-specific編號）",qty:"—（自燃性矽烷；依實際危害與CNS 15030認定）",
+ use:"半導體矽薄膜／磊晶前驅物（高階矽烷、低溫沉積）。",
+ phys:"無色<b>自燃性液體</b>（沸點約53°C），刺鼻；接觸空氣起火，遇水分解。",
+ hazard:"<b>自燃性液體</b>（接觸空氣即燃）；蒸氣易燃爆；<b>遇水／潮氣分解放氫、生成SiO₂</b>；與氧化劑劇烈反應。",
+ fire:"<span class='forbid'>勿將水射入洩漏源</span>；乾粉／CO₂／乾砂撲滅，水霧冷卻容器；先關來源。",
+ spill:"隔離除火源；乾砂／乾粉覆蓋、惰氣，禁水沖洗；防蒸氣自燃。",
+ aid:"吸入移離給氧送醫；皮膚／眼接觸大量清水沖洗送醫。",
+ ppe:"抗閃焰防火防護＋SCBA。"},
+
+{zh:"四矽烷 / 丁矽烷",en:"Tetrasilane",alias:"四矽烷 丁矽烷 Si4H10 ※表7-3稱「四氫化矽」係以矽原子數命名，與SiH4慣稱之「四氫化矽」不同物質",cas:"7783-29-1",un:"3194",erg:"135",tox:null,cat:["oxid","tech"],water:true,gas:false,haz:"第三類 發火性液體（自燃性矽烷·遇水反應）；運輸歸UN3194 無機自燃液體n.o.s.·ERG135（無substance-specific編號）",qty:"—（自燃性矽烷；依實際危害與CNS 15030認定）",
+ use:"半導體矽薄膜／磊晶前驅物（高階矽烷）。",
+ phys:"無色<b>自燃性液體</b>（沸點約108°C），刺鼻；遇空氣起火、遇水分解。",
+ hazard:"<b>自燃性液體</b>；蒸氣易燃；<b>遇水／潮氣分解放氫、生成SiO₂</b>；與氧化劑劇烈反應。",
+ fire:"<span class='forbid'>勿將水射入洩漏源</span>；乾粉／CO₂／乾砂撲滅，水霧冷卻容器；先關來源。",
+ spill:"隔離除火源；乾砂／乾粉覆蓋、惰氣、禁水；防蒸氣自燃。",
+ aid:"吸入移離給氧送醫；皮膚／眼大量清水沖洗送醫。",
+ ppe:"抗閃焰防火防護＋SCBA。"},
+
+{zh:"二乙基鎂",en:"Diethylmagnesium",alias:"二乙基鎂 DEM Mg(C2H5)2 (C2H5)2Mg",cas:"557-18-6",un:"3053",erg:"135",tox:null,cat:["oxid","tech"],water:true,gas:false,haz:"第三類 有機金屬化合物（發火性·禁水性）；UN3053 烷基鎂·ERG135",qty:"第一級10／第二級50／第三級300公斤（第三類 有機金屬化合物）",
+ use:"有機合成（類格林納之烷基化／還原）、聚合觸媒、ALD/CVD鎂前驅物。",
+ phys:"白色固體（多以醚類溶液使用）；<b>自燃性、遇水劇烈反應</b>。",
+ hazard:"接觸空氣自燃；<b>遇水爆發性放乙烷起火</b>並生成Mg(OH)₂；與醇、酸、鹵素、氧化劑激烈反應；溶劑（醚）本身易燃。",
+ fire:"<span class='forbid'>嚴禁用水、泡沫、CO₂</span>；乾砂／D類乾粉／膨脹蛭石覆蓋窒息；遠端冷卻鄰近容器。",
+ spill:"隔離除火源；乾粉／乾砂覆蓋，惰氣，禁水；防溶劑蒸氣起火。",
+ aid:"皮膚／眼灼傷拂除後大量清水沖洗送醫；吸入移離給氧送醫。",
+ ppe:"抗閃焰防火化學衣＋正壓SCBA。"},
+
+{zh:"二苯基鎂",en:"Diphenylmagnesium",alias:"二苯基鎂 Mg(C6H5)2 (C6H5)2Mg Ph2Mg",cas:"555-54-4",un:"3395",erg:"135",tox:null,cat:["oxid","tech"],water:true,gas:false,haz:"第三類 有機金屬化合物（禁水性）；運輸歸UN3395 有機金屬固體遇水反應n.o.s.·ERG135（Class4.3；烷基鎂為UN3053）",qty:"第一級10／第二級50／第三級300公斤（第三類 有機金屬化合物）",
+ use:"有機合成芳基化試劑、有機金屬前驅物。",
+ phys:"白色固體（常以醚溶液使用）；<b>遇水劇烈反應</b>、對空氣濕氣敏感。",
+ hazard:"<b>遇水放出苯並生成Mg(OH)₂（放熱）</b>；接觸空氣易氧化／可能起火；與醇、酸、氧化劑反應；醚溶液易燃。",
+ fire:"<span class='forbid'>禁水、禁泡沫／CO₂</span>；乾砂／D類乾粉覆蓋窒息；遠端冷卻鄰近容器。",
+ spill:"禁水；乾粉／乾砂覆蓋、惰氣收集；防溶劑蒸氣起火。",
+ aid:"皮膚／眼接觸拂除後大量清水沖洗送醫；吸入移離給氧送醫。",
+ ppe:"防火化學防護＋SCBA。"},
+
+{zh:"三甲基硼",en:"Trimethylborane (Trimethylboron)",alias:"三甲基硼 三甲基硼烷 TMB B(CH3)3 (CH3)3B",cas:"593-90-8",un:"",erg:"116",tox:null,cat:["oxid","tech"],water:true,gas:true,haz:"第2.1類自燃性可燃氣體；無substance-specific UN，本卡ERG採116（自燃可燃氣，同二矽烷）；高壓氣體範疇·非公危六類",qty:"—（自燃性可燃氣體，屬高壓氣體管理）",
+ use:"<b>半導體硼摻雜（p型）、含硼薄膜之硼前驅物</b>、有機合成。",
+ phys:"無色氣體（沸點約-20°C），刺激氣味；<b>接觸空氣自燃</b>，遇水反應。",
+ hazard:"<b>自燃性、極易燃氣體</b>；空氣中自行起火、與氧化劑爆炸；<b>遇水／醇分解</b>；燃燒生成氧化硼（B₂O₃）煙；鋼瓶受熱有爆炸之虞。",
+ fire:"<b>首要遠端關氣源</b>；未止漏前<span class='forbid'>勿滅火焰</span>；水霧冷卻鋼瓶（勿射入洩漏口），待氣源耗盡；乾粉／CO₂撲滅局部火。",
+ spill:"疏散、隔離、上風；正壓SCBA由閥源止漏，除火花靜電。",
+ aid:"吸入：移至新鮮空氣、給氧、送醫。",
+ ppe:"正壓SCBA＋抗閃焰防護。"},
+
+{zh:"三乙基硼",en:"Triethylborane (TEB)",alias:"三乙基硼 三乙基硼烷 TEB B(C2H5)3 (C2H5)3B",cas:"97-94-9",un:"3394",erg:"135",tox:null,cat:["oxid","tech"],water:true,gas:false,haz:"第三類 有機金屬化合物（發火性液體·禁水性）※UN3394為有機金屬自燃遇水通用編號（非專屬）",qty:"第一級10／第二級50／第三級300公斤（第三類 有機金屬化合物）",
+ use:"<b>半導體硼摻雜／含硼薄膜前驅物</b>；引擎點火劑、聚合起始劑、有機合成。",
+ phys:"無色<b>自燃性液體</b>；接觸空氣立即起火（綠色火焰），遇水反應；揮發蒸氣亦自燃。",
+ hazard:"<b>強自燃性</b>（微量接觸空氣即燃）；<b>遇水劇烈放乙烷起火</b>；與氧化劑爆炸；燃燒生成氧化硼煙。",
+ fire:"<span class='forbid'>嚴禁用水、泡沫、CO₂、鹵素滅火劑</span>；<b>乾砂、D類乾粉、膨脹蛭石覆蓋窒息</b>；遠端水霧冷卻鄰近容器外壁。",
+ spill:"隔離除火源；乾粉／乾砂覆蓋、惰氣、禁水；蒸氣自燃注意。",
+ aid:"皮膚／眼灼傷拂除後大量清水沖洗送醫；吸入移離給氧送醫。",
+ ppe:"抗閃焰防火化學衣＋正壓SCBA。"},
+
+{zh:"二甲膦",en:"Dimethylphosphine",alias:"二甲膦 二甲基膦 二甲基磷化氫 (CH3)2PH Me2PH",cas:"676-59-5",un:"",erg:"119",tox:null,cat:["oxid","tech","toxic"],water:true,gas:true,haz:"自燃性·可燃·毒性氣體（高壓氣體範疇·非公危六類）※無專屬UN，參照磷化氫PH3·UN2199·ERG119",qty:"—（自燃性毒性可燃氣體，屬高壓氣體管理）",
+ use:"有機磷合成、配位化學配體；半導體含磷特殊前驅物。",
+ phys:"無色氣體／易揮發液體（沸點約20-25°C），惡臭（腐魚味）；<b>自燃性、劇臭、有毒</b>。",
+ hazard:"<b>自燃性、極易燃</b>；<b>有毒（刺激呼吸道、類磷化氫毒性）</b>；接觸空氣起火、遇氧化劑劇烈反應；燃燒生成磷氧化物（磷酸煙）；遇水／酸可能放可燃有毒氣。",
+ fire:"<b>先關氣源</b>；未止漏前<span class='forbid'>勿滅火焰</span>；水霧冷卻鋼瓶（勿射入洩漏口）；燃燒生成磷酸煙，SCBA、上風。",
+ spill:"大範圍隔離、上風、低窪警戒；正壓SCBA止漏、除火源。",
+ aid:"吸入：移離給氧、安靜送醫（注意延遲性肺水腫）。",
+ ppe:"正壓SCBA＋防護（防毒兼防火）。"},
+
+{zh:"二甲胂",en:"Dimethylarsine",alias:"二甲胂 二甲基胂 二甲基砷化氫 (CH3)2AsH Me2AsH",cas:"593-57-7",un:"",erg:"119",tox:null,cat:["oxid","tech","toxic"],water:true,gas:false,haz:"自燃性·可燃·劇毒（砷）之揮發性液體／氣體（非公危六類）※無專屬UN，參照砷化氫AsH3·UN2188·ERG119",qty:"—（自燃性劇毒可燃物，屬高壓氣體／毒性物質管理）",
+ use:"含砷化合物半導體特殊前驅物、有機砷合成；為砷生物甲基化之中間物。",
+ phys:"無色揮發性液體（沸點約36°C），惡臭（大蒜味）；<b>自燃性、劇毒</b>。",
+ hazard:"<b>自燃性、易燃</b>；<b>砷劇毒（溶血、傷肝腎神經，類砷化氫）</b>，低濃度即危害；接觸空氣起火、遇氧化劑劇烈；燃燒生成有毒氧化砷煙。",
+ fire:"先關／止漏來源；乾粉／CO₂撲滅局部火，水霧冷卻容器（勿射入洩漏源）；<b>燃燒生成劇毒砷煙，全程SCBA、上風、大範圍警戒</b>。",
+ spill:"大範圍隔離疏散、上風、低窪警戒；A級防護止漏；防復燃。",
+ aid:"吸入：立即移離、給氧、<b>絕對臥床（勿走動）、儘速送醫並告知疑似有機砷／砷化氫類中毒（可能溶血、需監測腎功能／尿色）</b>。",
+ ppe:"A級全密封化學防護＋正壓SCBA。"},
+
+{zh:"鉑黑",en:"Platinum black",alias:"鉑黑 鉑黑粉 鉑絨 platinum black Pt ※表7-3標式「P5」為誤植（鉑為Pt·非磷P）",cas:"7440-06-4",un:"3200",erg:"135",tox:null,cat:["tech"],water:false,gas:false,haz:"自燃性細鉑觸媒；細/新鮮鉑黑歸UN3200 無機自燃固體n.o.s.·ERG135（塊狀鉑非DG）；非禁水，可催化點燃周邊可燃氣/蒸氣",qty:"—（非六類；細金屬觸媒、自燃性）",
+ use:"燃料電池／觸媒電極、觸媒氫化、氣體感測、實驗室催化。",
+ phys:"黑色極細鉑粉（高比表面積）；<b>本身非遇水反應</b>，但<b>具催化自燃性</b>——可使吸附之氫氣／可燃蒸氣於常溫自行起火。",
+ hazard:"<b>催化點火危害</b>：接觸氫氣、醇、可燃蒸氣時可催化其自燃（不需外部火源）；細粉受熱／富氧下可自行發熱起火；<b>並非遇水反應物</b>（表7-3之禁水分類存疑，主要危害為催化自燃）。",
+ fire:"移離可燃氣／蒸氣來源；以乾粉／乾砂／CO₂窒息（水可用於冷卻周邊，惟避免揚起細粉）；防細粉吸入。",
+ spill:"避免揚塵與接觸可燃蒸氣；輕覆濕潤收集於惰性容器（鉑貴重宜回收）。",
+ aid:"吸入細粉移離給氧；一般以除污、就醫觀察為主。",
+ ppe:"防塵面罩／SCBA；遠離可燃氣環境。"},
+
+{zh:"黃原酸鹽",en:"Xanthates (salts of xanthic acid)",alias:"黃原酸鹽 黃藥 二硫代碳酸酯 乙基黃原酸鈉 SEX 通式R-O-CS-S-M ※表7-3「黃原酸羥基Ro-Cs-Sk」為亂碼",cas:"140-90-9",un:"3342",erg:"135",tox:null,cat:["oxid","common"],water:false,gas:false,haz:"自熱性物質（第4.2類·UN3342 xanthates·ERG135）※以乙基黃原酸鈉為代表；非典型遇水劇烈反應",qty:"—（自熱性物質；非公危六類具名）",
+ use:"<b>礦業浮選捕收劑（金屬硫化礦浮選）</b>、橡膠硫化促進劑、纖維素黃酸酯（縲縈）中間物。",
+ phys:"黃色固體／粉末或顆粒，特殊臭味；<b>自熱／自反應性</b>；<b>遇酸分解放出易燃且有毒之二硫化碳（CS₂）</b>。",
+ hazard:"<b>自熱性</b>（大量堆積受潮／受熱可自行升溫起火，尤其乙基黃原酸鹽）；<b>遇酸釋出CS₂（極易燃、毒）與COS</b>；粉塵可燃；分解生成硫氧化物毒煙；非典型遇水劇烈反應物（表7-3之禁水分類係就其自熱與分解放CS₂而言）。",
+ fire:"可用<b>大量水／水霧灌注冷卻（自熱性物質以降溫為主）</b>並防復燃；避免密閉堆積蓄熱；燃燒生成CS₂／SOx毒煙，SCBA、上風。",
+ spill:"移離熱源／酸；避免揚塵；收集於陰涼通風處防蓄熱自燃；勿與酸混置。",
+ aid:"吸入CS₂／硫煙移離給氧送醫；皮膚／眼接觸大量清水沖洗；誤食就醫。",
+ ppe:"防塵面罩／SCBA、防護手套；儲運防潮防熱。"}
+);
+
+/* ---------- 批次12：科技廠強酸/強鹼補列（2026-07-29 盤點缺口；UN/ERG/CAS 均經 CAMEO・CAS官方庫查證） ---------- */
+DATA.push(
+{zh:"二氟化氫銨",en:"Ammonium bifluoride (Ammonium hydrogendifluoride)",alias:"二氟化氫銨 氟氫化銨 酸性氟化銨 ABF NH4HF2 蝕刻粉 Ammonium bifluoride",cas:"1341-49-7",un:"1727",erg:"154",tox:null,cat:["tech","common","toxic"],water:false,gas:false,haz:"非公共危險物品六類（酸性氟化物·腐蝕·毒性）；UN1727 二氟化氫銨固體·Class8·PGII·ERG154（溶液為UN2817）",qty:null,
+ use:"<b>半導體/玻璃蝕刻與清洗（固態HF來源，較液態HF易搬運）</b>、鋁件光澤處理與陽極處理前處理、不鏽鋼除鏽、石材/圬工清洗。",
+ phys:"白色結晶固體/片狀，微酸味；<b>常溫不釋HF蒸氣</b>，但溶於水即呈強酸性氟化物，受潮/受熱則放出HF。",
+ hazard:"<b>本質即HF危害來源</b>：溶解或受熱釋出<b>氟化氫(HF)</b>；皮膚接觸產生<b>與氫氟酸相同之氟中毒——深層組織壞死、致命性低血鈣/心律不整</b>，疼痛常延遲；吞食/吸入劇毒；侵蝕玻璃與多數金屬（放氫）。",
+ fire:"本身不燃；受熱分解放出<b>HF與氨之腐蝕毒煙</b>。以水霧冷卻容器並壓制煙霧（勿直沖粉體以免揚塵），全程正壓SCBA。",
+ spill:"<b>乾式收集、嚴防揚塵</b>；勿與酸混合（加速釋HF）；殘留以石灰/碳酸鈉中和後清洗；圍堵勿入下水道。",
+ aid:"<b>一律比照氫氟酸處置</b>：立即脫除污染衣物、大量清水沖洗≥15分，<b>儘速塗敷2.5%葡萄糖酸鈣凝膠並送醫</b>；現場監測血鈣與心電圖。眼睛大量沖水後急送醫。",
+ ppe:"防酸全身衣（丁基/氯丁）、面罩、防塵/正壓SCBA；<b>現場預置葡萄糖酸鈣</b>。"},
+
+{zh:"氟矽酸",en:"Fluorosilicic acid (Hexafluorosilicic acid)",alias:"氟矽酸 氟矽酸水溶液 六氟矽酸 矽氟氫酸 H2SiF6 FSA Fluosilicic acid",cas:"16961-83-4",un:"1778",erg:"154",tox:null,cat:["tech","common"],water:false,gas:false,haz:"非公共危險物品六類（強酸腐蝕·含氟）；UN1778 氟矽酸·Class8·PGII·ERG154",qty:null,
+ use:"玻璃/矽晶蝕刻與霧面處理、金屬表面處理與電鍍、自來水加氟、氟化鋁/冰晶石製造；亦為磷肥製程副產物。",
+ phys:"無色~淡黃透明<b>發煙液體</b>，刺鼻酸味；強酸、強腐蝕；侵蝕玻璃與陶瓷。",
+ hazard:"強酸灼傷；<b>受熱/濃縮分解釋出氟化氫(HF)與四氟化矽(SiF₄)</b>；接觸後具<b>氟中毒風險（低血鈣）</b>，須比照HF警戒；與鹼、金屬反應放熱/放氫。",
+ fire:"本身不燃；容器受熱釋出HF/SiF₄腐蝕毒煙。水霧冷卻容器與驅散煙霧，全程SCBA與防酸服。",
+ spill:"以石灰/碳酸鈉中和稀釋，圍堵勿入下水道；<b>禁用玻璃容器盛裝</b>；防止接觸皮膚。",
+ aid:"<b>比照氫氟酸</b>：大量清水沖洗≥15分並<b>備葡萄糖酸鈣凝膠、儘速送醫</b>；眼睛大量沖水急送醫；吸入移離給氧。",
+ ppe:"丁基/氯丁防酸全身衣、面罩、SCBA；備葡萄糖酸鈣。"},
+
+{zh:"草酸",en:"Oxalic acid",alias:"草酸 乙二酸 修酸 草酸二水合物 (COOH)2 H2C2O4 Oxalic acid",cas:"144-62-7",un:"3261",erg:"154",tox:null,cat:["tech","common"],water:false,gas:false,haz:"非公共危險物品六類（腐蝕性有機酸·毒性）；UN3261 腐蝕性固體·酸性·有機物n.o.s.·Class8·PGIII·ERG154（溶液為UN3265）",qty:null,
+ use:"<b>半導體/面板清洗與金屬氧化物蝕刻</b>、CMP後清洗與金屬殘留去除、鋁陽極處理、除鏽漂白、皮革/紡織處理。",
+ phys:"白色結晶固體（市售多為二水合物）；水溶液酸性明顯強於一般有機酸；受熱昇華/分解。",
+ hazard:"腐蝕灼傷皮膚與眼；<b>吸收後與血鈣結合造成低血鈣、並在腎小管沉積草酸鈣致急性腎損傷</b>；吞食劇毒（致死量低）；粉塵刺激呼吸道。",
+ fire:"可燃性低；受熱分解生成<b>一氧化碳、二氧化碳、甲酸</b>等刺激性氣體。水霧、乾粉、CO₂均可；水霧冷卻容器。",
+ spill:"乾式收集避免揚塵；以碳酸鈉/石灰中和後清水沖洗；勿與強氧化劑、次氯酸鹽混置。",
+ aid:"皮膚/眼：大量清水沖洗≥15分並送醫。<b>吞食或大面積吸收者須就醫評估血鈣與腎功能（可能需補鈣）</b>；吸入移離給氧。",
+ ppe:"防酸手套與護目/面罩、防塵口罩；大量作業時防酸衣。"},
+
+{zh:"氫氧化鋰",en:"Lithium hydroxide",alias:"氫氧化鋰 一水合氫氧化鋰 LiOH LiOH·H2O 鋰鹼 Lithium hydroxide",cas:"1310-65-2",un:"2680",erg:"154",tox:null,cat:["tech","common"],water:false,gas:false,haz:"非公共危險物品六類（強鹼腐蝕）；UN2680 氫氧化鋰固體·Class8·PGII·ERG154（溶液為UN2679）※一水合物CAS 1310-66-3",qty:null,
+ use:"<b>鋰電池正極材料（NCM/NCA高鎳三元）之關鍵前驅物</b>、鋰基潤滑脂增稠劑、密閉空間CO₂吸收劑（潛艦/太空艙）、特殊玻璃陶瓷。",
+ phys:"白色<b>強吸濕性</b>結晶粉末，無臭；水溶液為強鹼；<b>吸收空氣中CO₂生成碳酸鋰</b>。",
+ hazard:"<b>強鹼腐蝕</b>——灼傷皮膚並造成<b>眼睛不可逆傷害</b>；粉塵刺激/灼傷呼吸道；與酸劇烈中和放熱；與鋁、鋅等兩性金屬反應放氫。",
+ fire:"本身不燃；周邊火可用水霧、乾粉、CO₂（惟本品會吸收CO₂）。受熱釋出腐蝕性氧化鋰粉塵，SCBA防護。",
+ spill:"乾式收集避免揚塵與吸濕結塊；<b>勿直接大量灌水（放熱噴濺）</b>，以少量水謹慎稀釋或弱酸中和後清洗。",
+ aid:"皮膚：立即脫除污染衣物、<b>大量清水持續沖洗≥20分</b>。<b>眼睛：撐開眼瞼大量沖洗≥30分並立即送醫</b>（鹼灼傷會持續深入）。吸入移離給氧送醫。",
+ ppe:"防鹼手套、密閉式護目鏡＋面罩、防塵口罩/SCBA、防護衣。"},
+
+{zh:"硝酸鈰銨",en:"Ceric ammonium nitrate (CAN)",alias:"硝酸鈰銨 硝酸銨鈰 四價鈰銨鹽 CAN 鉻蝕刻液 Cr etchant (NH4)2Ce(NO3)6 Ceric ammonium nitrate",cas:"16774-21-3",un:"1477",erg:"140",tox:null,cat:["tech","oxid"],water:false,gas:false,haz:"第一類 氧化性固體（硝酸鹽類）；運輸歸UN1477 硝酸鹽·無機物n.o.s.·Class5.1·PGII·ERG140",qty:"第一級50／第二級300／第三級1,000公斤（依CNS 15030分類）",
+ use:"<b>光罩(photomask)與TFT-LCD之鉻(Cr)蝕刻液主成分</b>；有機合成單電子氧化劑；分析試劑（標定用）。",
+ phys:"橙紅色結晶固體；易溶於水，水溶液呈酸性且具<b>強氧化性</b>；蝕刻液多為CAN＋硝酸/過氯酸配方。",
+ hazard:"<b>強氧化劑（助燃）</b>——與可燃物、還原劑、有機溶劑混合可劇烈反應或起火；腐蝕灼傷皮膚與眼；受熱分解放出<b>氮氧化物(NOx)毒煙</b>；吞食/吸入有害。",
+ fire:"本身不燃但<b>助燃、可使火勢急遽擴大</b>：<b>以大量水灌注冷卻稀釋</b>為主，移開周邊可燃物；<span class='forbid'>勿用乾粉/CO₂單獨悶壓</span>（氧化劑自帶氧）。燃燒生成NOx，全程SCBA、上風。",
+ spill:"<b>嚴禁與可燃物、紙布、溶劑混合收集</b>；以惰性不可燃吸收材圍堵、專用容器盛裝；大量水稀釋沖洗殘留。",
+ aid:"皮膚/眼：大量清水沖洗≥15-20分並送醫；吸入NOx移離給氧、<b>留觀延遲性肺水腫</b>；誤食漱口送醫。",
+ ppe:"防酸鹼手套、護目鏡＋面罩、防護衣；火場正壓SCBA。"}
+);
+
+/* ---------- 批次13：鹼類/有機酸補列（2026-07-29；UN/ERG/CAS 經 CAMEO・供應商SDS查證。
+   ※氫氧化鈣與檸檬酸經查證「運輸上非危險物品」故 un 留空；檸檬酸無對應ERG指南故 erg 亦留空，不硬填。 ---------- */
+DATA.push(
+{zh:"氫氧化鈣 / 消石灰",en:"Calcium hydroxide (Slaked lime)",alias:"氫氧化鈣 消石灰 熟石灰 石灰乳 石灰水 Ca(OH)2 Slaked lime Hydrated lime",cas:"1305-62-0",un:"",erg:"154",tox:null,cat:["common","tech"],water:false,gas:false,haz:"非公共危險物品六類（強鹼性腐蝕固體）；<b>運輸上多不列為危險物品(無UN)</b>；ERG154係依腐蝕性不燃固體比照",qty:null,
+ use:"<b>化災現場常用之酸性洩漏中和劑</b>（本系統多張酸類卡之洩漏處置即建議使用）、水處理pH調整與軟化、煙道氣脫硫、營建砂漿/石灰乳、農業土壤改良。",
+ phys:"白色粉末或乳白漿液，無臭；微溶於水但<b>飽和液即達pH約12.4之強鹼</b>；吸收空氣中CO₂轉為碳酸鈣而失效。",
+ hazard:"<b>強鹼</b>：粉塵造成<b>嚴重且可能不可逆之眼睛傷害</b>；<b>皮膚長時間接觸致鹼灼傷（即俗稱「水泥灼傷」，常延遲數小時才劇痛，等發現時已深層壞死）</b>；吸入粉塵刺激呼吸道。與酸中和劇烈放熱。",
+ fire:"不燃。周邊火依現場火載選用滅火劑；<b>避免以強力水柱吹揚粉塵</b>。",
+ spill:"乾式收集、少量水潤濕抑塵；勿使大量流入水體或下水道（pH飆升危害水生生物）。",
+ aid:"<b>皮膚：立即脫除污染衣物與鞋襪（粉末易積在袖口/靴內持續灼傷），大量清水沖洗≥20分</b>。<b>眼睛：撐開眼瞼大量沖洗≥30分並立即送醫</b>（鹼灼傷會持續往深層侵蝕）。吸入移離至新鮮空氣。",
+ ppe:"防塵口罩(N95以上)、<b>密閉式護目鏡</b>、防護手套與長袖；避免粉塵接觸皮膚汗濕處。"},
+
+{zh:"氫氧化四乙基銨 / 四丁基銨",en:"Tetraethylammonium hydroxide (TEAH) / Tetrabutylammonium hydroxide (TBAH)",alias:"氫氧化四乙基銨 四乙基氫氧化銨 TEAH 77-98-5 氫氧化四丁基銨 四丁基氫氧化銨 TBAH 2052-49-5 四級銨鹼 季銨鹼",cas:"77-98-5,2052-49-5",un:"1719",erg:"154",tox:null,cat:["tech","toxic"],water:false,gas:false,haz:"非公共危險物品六類（強鹼腐蝕·四級銨鹼）；水溶液歸UN1719 苛性鹼液n.o.s.·Class8·ERG154（部分SDS改用UN3267 腐蝕性鹼性有機液n.o.s.，同Class8·ERG154）※<b>甲醇溶液型另具易燃性與甲醇毒性，須依該產品SDS之分類</b>",qty:null,
+ use:"半導體/面板<b>特殊光阻顯影液與清洗液</b>（TMAH之替代或配方成分）、相轉移觸媒、沸石合成模板劑、電子級蝕刻與分析試劑。",
+ phys:"無色至淡黃液體（市售多為10~40%<b>水溶液</b>或<b>甲醇溶液</b>），氨/胺臭；強鹼。",
+ hazard:"<b>強鹼腐蝕</b>灼傷皮膚、<b>眼睛可致不可逆傷害</b>。<b>與TMAH同屬四級銨鹼——四級銨陽離子具神經節阻斷／神經肌肉阻斷之藥理活性</b>，大面積皮膚接觸應比照TMAH視為<b>可能經皮吸收之全身性中毒</b>處置（※目前經皮致死之明確病例文獻以TMAH為主，本類尚無同等規模報告，故採保守處置）。甲醇溶液型另有易燃與甲醇中毒風險。",
+ fire:"水溶液不燃；<b>甲醇溶液型易燃</b>——以抗醇泡沫、乾粉或CO₂撲滅，水霧冷卻容器。燃燒生成氮氧化物與胺類刺激煙。",
+ spill:"<b>嚴防皮膚接觸</b>；以弱酸（如醋酸）謹慎中和並大量水稀釋、圍堵；甲醇溶液型須同時除火源。",
+ aid:"<b>立即脫除污染衣物、大量清水沖洗皮膚≥30分</b>；眼睛撐開沖洗≥30分。<b>即使當下無痛感，凡大面積接觸者一律送醫並監測呼吸與心律</b>（比照TMAH處置原則）。",
+ ppe:"防滲透全身防護衣、面罩、耐鹼手套；大量作業時SCBA。"},
+
+{zh:"氫氧化膽鹼",en:"Choline hydroxide",alias:"氫氧化膽鹼 膽鹼鹼 Choline hydroxide 2-羥乙基三甲基氫氧化銨 Choline base 123-41-1",cas:"123-41-1",un:"1719",erg:"154",tox:null,cat:["tech","common"],water:false,gas:false,haz:"非公共危險物品六類（強鹼腐蝕·四級銨鹼）；水溶液歸UN1719 苛性鹼液n.o.s.·Class8·ERG154（部分SDS用UN3267，同Class8·ERG154）※甲醇溶液型另具易燃性，依該產品SDS分類",qty:null,
+ use:"<b>電子/印刷電路板業之清洗液與顯影液配方成分</b>、光阻剝離劑、油漆剝除劑；亦作飼料添加之膽鹼來源、氣流脫硫化氫、離子液體前驅物。",
+ phys:"無色至淡黃<b>黏稠液</b>（市售多為45~50%水溶液或甲醇溶液），胺/魚腥味；強鹼；<b>不穩定、需冷藏避光</b>，久置或受熱會分解。",
+ hazard:"<b>強鹼腐蝕</b>灼傷皮膚與眼（眼睛可致嚴重傷害）；屬四級銨鹼，大面積接觸宜比照同類季銨鹼保守處置；<b>受熱或久置分解釋出三甲胺</b>（強烈腥臭、刺激呼吸道且可燃）。甲醇溶液型另有易燃與甲醇毒性。",
+ fire:"水溶液不燃；甲醇溶液型易燃（抗醇泡沫/乾粉/CO₂）。受熱分解生成三甲胺與氮氧化物刺激煙，SCBA防護。",
+ spill:"防皮膚接觸；弱酸謹慎中和、大量水稀釋、圍堵；通風以驅散胺臭。",
+ aid:"皮膚：脫除污染衣物、<b>大量清水沖洗≥20-30分</b>；眼睛撐開沖洗≥30分並送醫。大面積接觸者送醫觀察。",
+ ppe:"耐鹼手套、密閉護目鏡＋面罩、防護衣。"},
+
+{zh:"檸檬酸",en:"Citric acid",alias:"檸檬酸 枸櫞酸 無水檸檬酸 一水檸檬酸 檸檬酸單水合物5949-29-1 Citric acid C6H8O7",cas:"77-92-9",un:"",erg:"",tox:null,cat:["tech","common"],water:false,gas:false,haz:"非公共危險物品六類（弱有機酸·刺激性）；<b>經查證運輸上不列為危險物品(無UN編號)，亦無對應之ERG指南，故本卡不填ERG</b>",qty:null,
+ use:"半導體/面板<b>CMP後清洗與金屬離子螯合</b>、晶圓表面金屬殘留去除、不鏽鋼鈍化與除鏽、鍋爐與管路酸洗；食品飲料酸味劑/抗氧化、清潔劑與除垢劑。",
+ phys:"白色結晶粉末或顆粒（無水物或一水合物），無臭、強酸味；極易溶於水呈弱酸（pKa₁約3.1，1%水溶液pH約2.2）。",
+ hazard:"<b>危害相對溫和</b>：粉塵與濃溶液刺激眼睛、皮膚與呼吸道（長時間接觸可致皮膚炎、傷牙釉質）；<b>細粉塵於密閉空間達一定濃度具粉塵爆炸性</b>；與強鹼中和放熱、與強氧化劑反應；受熱分解生成刺激性煙霧。",
+ fire:"可燃固體（需較高溫度才著火）。水、水霧、乾粉、CO₂均適用；<b>注意作業中揚起之粉塵雲與靜電</b>。",
+ spill:"乾式收集避免揚塵、除靜電火源；殘留大量水沖洗；勿與強氧化劑、強鹼混置。",
+ aid:"皮膚/眼：大量清水沖洗≥15分（眼睛持續沖洗並就醫）；吸入粉塵移離至新鮮空氣；誤食大量者漱口、飲水並就醫。",
+ ppe:"防塵口罩、護目鏡、手套；粉體作業加強通風與防靜電。"}
+);
+
 /* ===================== 官方完整列管毒化物清單 =====================
    來源：環境部化學物質管理署 開放資料 TOXIC_P_23
         「公告毒性化學物質及其毒性分類」
@@ -3285,7 +3624,42 @@ const CHIPS = [
 let activeChip = "all";
 let query = "";
 
-const norm = s => (s||"").toString().toLowerCase().replace(/\s|-/g,"");
+/* ===== 中文化學名「異寫」正規化 =====
+   同一物質在台灣/大陸/港澳、系統名與俗名之間常有不同寫法(如 硅烷=矽烷、高錳酸鉀=過錳酸鉀、
+   四甲基氫氧化銨=氫氧化四甲基銨)，現場拿到的SDS未必與本系統用字一致。
+   查詢與資料兩邊都跑同一套正規化，使任一寫法都能命中同一張卡。
+   ⚠ 名稱僅供檢索，**確認是否同一物質請以 CAS 號碼為準**(一物一號、國際通用)。 */
+const SC_S="氢钠钾铝锌铁铜铅锰铬镍镉钡锂钙镁钛锆钨银过盐碱气体剂锑铊铍钒钴钼钽铌铪铯铷锶镓锗铈钌铂铵亚烃锡铀钍钇镧硅";
+const SC_T="氫鈉鉀鋁鋅鐵銅鉛錳鉻鎳鎘鋇鋰鈣鎂鈦鋯鎢銀過鹽鹼氣體劑銻鉈鈹釩鈷鉬鉭鈮鉿銫銣鍶鎵鍺鈰釕鉑銨亞烴錫鈾釷釔鑭矽";
+const SC_RE=new RegExp("["+SC_S+"]","g");   // 簡體→繁體(僅化學常用字；含 硅→矽)
+/* 詞組級同義替換（用詞組不用單字，避免誤傷：「乙」不可一律換「醋」，否則乙醇/乙炔會被破壞） */
+const NAME_VARIANTS=[
+  [/高錳酸/g,"過錳酸"],[/高氯酸/g,"過氯酸"],   // 陸:高錳酸鉀/高氯酸 ＝ 台:過錳酸鉀/過氯酸
+  [/乙酸/g,"醋酸"],                            // 系統名乙酸＝俗名醋酸(冰乙酸→冰醋酸、乙酸乙酯→醋酸乙酯)
+  [/四甲基氫氧化銨/g,"氫氧化四甲基銨"],          // 語序異寫
+  [/山埃/g,"山奈"],                            // 港澳:山埃 ＝ 台:山奈(氰化鈉俗名)
+  [/鹽鏹水/g,"鹽酸"],[/溴素/g,"溴"],[/二甲基硫酸酯/g,"硫酸二甲酯"],
+];
+const norm = s => {
+  let t=(s||"").toString().toLowerCase().replace(/\s|-/g,"");
+  t=t.replace(SC_RE,ch=>SC_T[SC_S.indexOf(ch)]);
+  for(const [re,to] of NAME_VARIANTS) t=t.replace(re,to);
+  return t;
+};
+/* 名稱異寫自我驗證：確保簡繁/陸台/俗名/語序各種寫法都命中預期卡片（載入時自動跑，亦可手動 validateNames()） */
+function validateNames(){
+  const cases=[["硅烷","矽烷"],["二氯硅烷","二氯矽烷"],["四氯化硅","四氯化矽"],["高錳酸鉀","過錳酸鉀"],
+    ["高氯酸","過氯酸"],["冰乙酸","醋酸（冰醋酸）"],["山埃","氰化鈉 / 氰化物"],["鹽鏹水","氯化氫 / 鹽酸"],
+    ["二甲基硫酸酯","硫酸二甲酯 (DMS)"],["四甲基氫氧化銨","氫氧化四甲基銨"],["氢氧化钠","氫氧化鈉"],
+    ["氢氟酸","氟化氫(無水) / 氫氟酸"],["亚硝酸钠","亞硝酸鈉"]];
+  const bad=cases.filter(([q,want])=>{const n=norm(q);
+    return !ALL.some(c=>c.zh===want&&[c.zh,c.en,c.alias].some(f=>f&&norm(f).includes(n)));});
+  if(bad.length) console.warn("⚠️ 名稱異寫對照失效 "+bad.length+" 項：",bad.map(x=>x[0]+" 應命中 "+x[1]));
+  else console.info(`✅ 名稱異寫驗證通過：${cases.length} 組異寫（簡繁/陸台/俗名/語序）均命中正確卡片`);
+  return bad;
+}
+window.validateNames = validateNames;
+validateNames();
 
 function matchChip(c){
   switch(activeChip){
@@ -3305,8 +3679,15 @@ function matchChip(c){
 function matchQuery(c){
   if(!query) return true;
   const q = norm(query);
-  if(/^\d{3,4}$/.test(q)){ if(norm(c.un)===q) return true; return [c.zh,c.en,c.alias].some(f=>f&&norm(f).includes(q)); }
-  const fields = [c.zh,c.en,c.alias,c.cas,c.un,c.formula, c.official&&c.official.id, c.official&&c.official.formula];
+  /* 3~4碼純數字：現場多半在查 UN 編號(UN恰為4碼)，故先比對UN；
+     同時支援「CAS 前綴」比對——讓只記得前幾碼的 7559、75-59 也能找到 CAS 75-59-2。
+     (CAS欄可能存多個號碼，以逗號切開逐段比對前綴) */
+  if(/^\d{3,4}$/.test(q)){
+    if(norm(c.un)===q) return true;
+    if((c.cas||"").split(",").some(x=>x&&norm(x).startsWith(q))) return true;
+    return [c.zh,c.en,c.alias].some(f=>f&&norm(f).includes(q));
+  }
+  const fields = [c.zh,c.en,c.alias,c.cas,c.un,c.formula, c.official&&c.official.id, c.official&&c.official.formula, deconSearchText(c)];
   return fields.some(f=>f&&norm(f).includes(q));
 }
 
@@ -3319,6 +3700,40 @@ function hl(text){
   }catch(e){return text;}
 }
 
+/* ===== 噴濺除污產品對照（敵腐靈 Diphoterine® / 六氟靈 Hexafluorine®，法國 Prevor）=====
+   依原廠適應症對應：六氟靈＝HF/氟化物（含混酸MAE；遇濕生HF之氟化物氣體依水解化學對應）；
+   敵腐靈＝酸/鹼/氧化/還原/烷化劑/酚類等腐蝕刺激性化學（僅列名明確屬原廠適應症家族者）；
+   禁水性（water:true）＝先拂除再大量清水（兩產品皆水性）；未列名者＝大量清水。
+   詳見「🧴 敵腐靈/六氟靈 噴濺對照」參考面板。名單與卡片之對應由 validateDecon() 於載入時驗證。 */
+/* 分兩級以免把推論當成原廠背書：
+   DECON_HEXA＝原廠明列適應症（氫氟酸及氟化物、含HF之混酸）；
+   DECON_HEXA_INFER＝本系統依「接觸濕潤組織水解生成HF」之化學推論（原廠/SDS未逐一列名），徽章標「推論」。 */
+const DECON_HEXA = new Set(["氟化氫(無水) / 氫氟酸","混酸蝕刻液 (MAE)","氟化銨","二氟化氫銨","氟矽酸"]);
+const DECON_HEXA_INFER = new Set(["氟","三氟化氯","三氟化硼","四氟化矽","六氟化鎢"]);
+const DECON_DIPHO = new Set(["硫酸","硝酸","王水","磷酸","過氯酸","甲基磺酸","胺基磺酸","醋酸（冰醋酸）","醋酸酐","甲酸（蟻酸）","丙烯酸","丙酸","氯化氫 / 鹽酸","溴化氫","氫氧化鈉","氫氧化鉀","氨水 / 氫氧化銨","氫氧化四甲基銨","氫氧化銫","過氧化氫 / 雙氧水","次氯酸鈉溶液 / 漂白水","氯化鐵溶液","三氧化鉻（鉻酐）","過錳酸鉀","溴","酚 / 苯酚","甲酚","甲醛 / 福馬林","單乙醇胺 / 乙醇胺","二乙醇胺","三乙醇胺","硫酸二甲酯 (DMS)","草酸","氫氧化鋰","硝酸鈰銨","氫氧化鈣 / 消石灰","氫氧化四乙基銨 / 四丁基銨","氫氧化膽鹼"]);
+/* ※檸檬酸為弱有機酸(食品級)，大量清水即足以處置，刻意不列入敵腐靈名單以免誇大其危害等級。 */
+function deconFlag(c){
+  if(DECON_HEXA.has(c.zh)) return `<span class="flag dcnh">🧴 噴濺→六氟靈</span>`;
+  if(DECON_HEXA_INFER.has(c.zh)) return `<span class="flag dcnh" title="本品接觸濕潤組織水解生成HF，故比照HF處置；此為本系統之化學推論，原廠適應症未逐一列名。無六氟靈時以大量清水持續沖洗並備鈣劑。">🧴 噴濺→六氟靈（推論）</span>`;
+  if(DECON_DIPHO.has(c.zh)) return `<span class="flag dcnd">🧴 噴濺→敵腐靈</span>`;
+  if(c.water) return `<span class="flag dcnw">🧴 噴濺→先拂除再清水</span>`;
+  return "";
+}
+function deconSearchText(c){
+  if(DECON_HEXA.has(c.zh)||DECON_HEXA_INFER.has(c.zh)) return "六氟靈 hexafluorine";
+  if(DECON_DIPHO.has(c.zh)) return "敵腐靈 diphoterine";
+  return "";
+}
+function validateDecon(){
+  const zs = new Set(DATA.map(d=>d.zh));
+  const miss = [...DECON_HEXA,...DECON_HEXA_INFER,...DECON_DIPHO].filter(n=>!zs.has(n));
+  if(miss.length) console.warn("⚠️ 除污產品對照名單有 "+miss.length+" 項對不到卡片（名稱不符）：", miss);
+  else console.info(`✅ 除污產品對照驗證通過：六氟靈 ${DECON_HEXA.size} 項(原廠適應症)＋${DECON_HEXA_INFER.size} 項(推論)、敵腐靈 ${DECON_DIPHO.size} 項均正確對應卡片`);
+  return miss;
+}
+window.validateDecon = validateDecon;
+validateDecon(); // 載入時驗證除污對照名單 ↔ 卡片一致（須在 DECON_* 宣告之後呼叫）
+
 function flagsHTML(c){
   let f="";
   // 官方清單為毒化物分類之權威來源：有官方值一律以官方值為準（人工值僅在無官方對應時備用）
@@ -3330,6 +3745,7 @@ function flagsHTML(c){
   if(c.haz && c.haz.indexOf("第")===0) f+=`<span class="flag haz">公危·${c.haz.split("(")[0]}</span>`;
   if(c.concern) f+=`<span class="flag concern">📛 關注化學物質</span>`;
   if(c.isLite) f+=`<span class="flag offi">官方清單</span>`;
+  f+=deconFlag(c);
   return f;
 }
 
@@ -3374,7 +3790,7 @@ function cardHTML(c,i){
     o?`<span class="id-pill toxno">列管 ${o.id}</span>`:"",
     c.cas?`<span class="id-pill">CAS ${c.cas}</span>`:"",
     c.un?`<span class="id-pill un">UN ${c.un}</span>`:"",
-    c.erg?`<span class="id-pill erg">ERG指南 ${c.erg}</span>`:"",
+    c.erg?`<span class="id-pill erg"${c.un?"":' title="本品無專屬UN編號；ERG指南係依危害性質比照同類物質，非由UN索引查得"'}>ERG指南 ${c.erg}${c.un?"":"（比照）"}</span>`:"",
     (c.formula||(o&&o.formula))?`<span class="id-pill">${c.formula||o.formula}</span>`:"",
   ].join("");
 
